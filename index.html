@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161715" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="E-Fund">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Emergency Fund</title>
+<script>
+// Apply a saved light/dark choice before the page draws, so it doesn't flash the other theme.
+try { const th = JSON.parse(localStorage.getItem('emergencyFundDistro.v1.ui')||'{}').theme;
+      if (th==='light' || th==='dark') document.documentElement.dataset.theme = th; } catch(e){}
+</script>
+<style>
+/* Light by default; dark follows the Mac setting unless the sun/moon button picked a theme. */
+:root{
+  color-scheme:light;
+  --bg:#f6f5f1; --surface:#ffffff; --surface-2:#f0eee8; --text:#1d1d1b; --muted:#6b6a65; --line:#e3e0d8;
+  --accent:#2f6f5e; --accent-soft:#dcebe5; --warn:#b4542d; --warn-soft:#f6e3da; --proj:#77746c; --on-accent:#fff;
+  --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.05),0 2px 8px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#161715; --surface:#1f201e; --surface-2:#282926; --text:#ecebe6; --muted:#a19f97; --line:#34352f;
+    --accent:#6cc2a6; --accent-soft:#21362f; --warn:#e58a63; --warn-soft:#3a251c; --proj:#8f8d85; --on-accent:#10211b;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#161715; --surface:#1f201e; --surface-2:#282926; --text:#ecebe6; --muted:#a19f97; --line:#34352f;
+    --accent:#6cc2a6; --accent-soft:#21362f; --warn:#e58a63; --warn-soft:#3a251c; --proj:#8f8d85; --on-accent:#10211b;
+    --shadow:none;
+}
+.headright{display:flex;gap:8px;align-items:flex-start}
+.theme-btn{flex:none;width:38px;height:38px;display:grid;place-items:center;border:0;border-radius:10px;background:var(--surface-2);color:var(--text);cursor:pointer}
+.theme-btn:hover{color:var(--accent)}
+.theme-btn svg{width:18px;height:18px}
+.chart-months{position:relative;height:16px;font-size:11px;color:var(--muted);margin-top:2px}
+.chart-months span{position:absolute;top:0;white-space:nowrap}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+h1{font-size:22px;margin:0;letter-spacing:-.01em}
+h2{font-size:17px;margin:0 0 12px}
+h3{font-size:14px;margin:0 0 8px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+nav{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px;flex-wrap:wrap}
+nav button{border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:7px;font:inherit;font-weight:500;cursor:pointer}
+nav button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.cov{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:860px){ .cov{grid-template-columns:1fr} }
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.hero{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-bottom:14px}
+.big{font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.big small{font-size:18px;font-weight:500;color:var(--muted)}
+.balance-input{font-size:28px;font-weight:700;width:100%;max-width:240px}
+input,textarea,select{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:5px 8px}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:8px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;color:var(--muted);padding:5px 10px;border-radius:6px;font:inherit;font-size:13px;cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.bar{height:8px;background:var(--surface-2);border-radius:5px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--accent);border-radius:5px}
+.bar.short>i{background:var(--warn)}
+.target{display:grid;grid-template-columns:62px 1fr auto;gap:10px;align-items:center;margin:8px 0;font-size:13px}
+.ok{color:var(--accent);font-weight:600}
+.bad{color:var(--warn);font-weight:600}
+table{width:100%;border-collapse:collapse}
+th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+tr.total td{font-weight:700;border-bottom:0;border-top:2px solid var(--line)}
+td input[type=text]{width:100%;min-width:90px}
+td input[type=number]{width:110px}
+.icon{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:4px 6px;border-radius:6px;font-size:14px}
+.icon:hover{background:var(--surface-2);color:var(--text)}
+.grip{cursor:grab;color:var(--muted);padding:4px 2px;-webkit-user-select:none;user-select:none;font-size:14px;letter-spacing:-2px;opacity:.6}
+.grip:hover{opacity:1;color:var(--text)}
+.grip:focus-visible{opacity:1;color:var(--text);outline:2px solid var(--accent);outline-offset:1px;border-radius:4px}
+td.gripcell{width:22px;padding-right:0}
+tr.dragging{opacity:.35}
+tr.drop-before td{box-shadow:inset 0 2px 0 var(--accent)}
+tr.drop-after td{box-shadow:inset 0 -2px 0 var(--accent)}
+[data-axis=x].dragging{opacity:.35}
+[data-axis=x].drop-before{box-shadow:inset 2px 0 0 var(--accent)}
+[data-axis=x].drop-after{box-shadow:inset -2px 0 0 var(--accent)}
+.yearlabel{width:64px;text-align:right;font-weight:600;padding:4px 6px}
+.sign{border:0;width:24px;height:24px;flex:none;border-radius:6px;font:inherit;font-weight:700;cursor:pointer;line-height:1}
+.sign.minus{background:var(--warn-soft);color:var(--warn)}
+.sign.plus{background:var(--accent-soft);color:var(--accent)}
+.link{border:0;background:none;color:var(--accent);padding:0;cursor:pointer;text-decoration:underline;font:inherit}
+.btn.small{padding:4px 10px;font-size:13px}
+.nudges{display:none;flex-direction:column;gap:2px}
+.touch-only{display:none}
+.nudges.x{flex-direction:row}
+.nudge{padding:0 6px;font-size:11px;line-height:1.5}
+.nudge:disabled{opacity:.25;cursor:default}
+@media (pointer:coarse){
+  .grip,.mouse-only{display:none}
+  .nudges{display:inline-flex}
+  .touch-only{display:inline}
+  input,select,textarea{font-size:16px}
+  .icon{padding:8px 9px}
+  .nudge{padding:3px 8px}
+}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:7px 14px;border-radius:8px;font:inherit;font-weight:500;cursor:pointer}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.danger{color:var(--warn)}
+.addrow{margin-top:8px}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
+.pill.got{background:var(--accent-soft);color:var(--accent)}
+.pill.need{background:var(--warn-soft);color:var(--warn)}
+tr.future td{color:var(--proj)}
+tr.future input{color:var(--proj)}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat b{font-size:22px;letter-spacing:-.01em}
+.banner{background:var(--warn-soft);color:var(--warn);padding:10px 14px;border-radius:10px;margin-bottom:14px;font-weight:500}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+textarea{width:100%;min-height:120px;resize:vertical}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+@media (max-width:600px){ .big{font-size:32px} td input[type=number]{width:80px} .card{padding:14px} th,td{padding:6px 3px} td input[type=text]{min-width:70px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Emergency Fund</h1>
+    <div class="headright">
+      <button id="themeBtn" class="theme-btn" data-act="theme"></button>
+      <nav id="tabs" aria-label="Sections"></nav>
+    </div>
+  </header>
+  <div id="banner"></div>
+  <main id="app"></main>
+</div>
+
+<script>
+const SEED = {"balance":0,"balanceUpdated":null,"budgets":{"current":{"necessities":[{"name":"Housing (rent/mortgage)","monthly":0},{"name":"Groceries","monthly":0},{"name":"Dining Out","monthly":0},{"name":"Transportation","monthly":0},{"name":"Fuel","monthly":0},{"name":"Auto Insurance","monthly":0},{"name":"Electricity","monthly":0},{"name":"Gas","monthly":0},{"name":"Water","monthly":0},{"name":"Internet","monthly":0},{"name":"Phone","monthly":0}],"minimalSubs":[{"name":"Streaming","monthly":0}],"extras":[{"name":"Gym","monthly":0}]},"adjusted":{"necessities":[{"name":"Housing (rent/mortgage)","monthly":0},{"name":"Groceries","monthly":0},{"name":"Dining Out","monthly":0},{"name":"Transportation","monthly":0},{"name":"Fuel","monthly":0},{"name":"Auto Insurance","monthly":0},{"name":"Electricity","monthly":0},{"name":"Gas","monthly":0},{"name":"Water","monthly":0},{"name":"Internet","monthly":0},{"name":"Phone","monthly":0}],"minimalSubs":[{"name":"Streaming","monthly":0}],"extras":[{"name":"Gym","monthly":0}]}},"paychecks":{},"income":{"years":[],"lines":[{"id":"roth","name":"Roth IRA","sign":-1,"amounts":{}}]},"typicalPaycheck":0,"notes":""};
+const KEY = 'emergencyFundDistro.v1';
+const TIERS = [['necessities','Necessities'],['minimalSubs','Minimal Subscriptions'],['extras','Extra Expenses']];
+const LEVELS = [['necessities','Necessities only',1],['minimalSubs','+ Minimal subs',2],['extras','+ All subs',3]];
+const BUDGETS = [['current','Current'],['adjusted','Adjusted']];
+const TARGETS = [[3,'3 months'],[6,'6 months'],[9,'9 months'],[12,'1 year']];
+
+/* ---------- helpers ---------- */
+const fmt = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
+const money = n => fmt.format(n||0);
+// Shift the decimal point as text instead of multiplying, so 1.005 becomes 101 cents
+// (1.005*100 is 100.4999… in floating point). Falls back for exponent-formatted numbers.
+// Halves round away from zero, so -1.005 becomes -101 cents, mirroring 1.005 → 101.
+const cents = n => {
+  const x = Number(n)||0, s = Math.sign(x), a = Math.abs(x), c = Math.round(Number(a+'e2'));
+  return s * (Number.isFinite(c) ? c : Math.round(a*100));
+};
+const sum = arr => arr.reduce((a,n)=>a+cents(n),0)/100;
+const r2 = n => cents(n)/100;
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Local calendar date as YYYY-MM-DD (toISOString() would convert to UTC and can shift the day).
+const isoDate = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const today = () => isoDate(new Date());
+const isISODate = s => typeof s==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const niceDate = iso => new Date(iso+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+
+/* ---------- storage ---------- */
+let storageOK = true;
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function uid(){ return Math.random().toString(36).slice(2,10); }
+// Older saves and backups stored income as {manualNet, roth} keyed by year label.
+// Convert those into editable year columns plus +/− lines.
+function normalize(s){
+  const inc = s.income || {};
+  if (!Array.isArray(inc.years)){
+    const pays = s.paychecks || {};
+    const labels = [...new Set([...Object.keys(inc.manualNet||{}), ...Object.keys(pays)])].sort();
+    const years = labels.map(l=>({id:uid(), label:l,
+      netOverride: (pays[l] && pays[l].length) ? null : (inc.manualNet && inc.manualNet[l]!=null ? inc.manualNet[l] : null)}));
+    const roth = {}; years.forEach(y=>{ roth[y.id] = Number((inc.roth||{})[y.label])||0; });
+    s.income = {years, lines:[{id:uid(), name:'Roth IRA', sign:-1, amounts:roth}]};
+  }
+  // Coerce every value to the type the screens expect, so a hand-edited backup can't
+  // break rendering or slip HTML into the page.
+  const num = v => r2(v), numOrNull = v => (v===null || v===undefined || v==='') ? null : r2(v);
+  const okId = id => typeof id==='string' && /^[a-z0-9]+$/i.test(id) ? id : uid();
+  BUDGETS.forEach(([b])=>TIERS.forEach(([tr])=>{
+    s.budgets[b][tr] = s.budgets[b][tr].map(i=>({name:String(i.name), monthly:num(i.monthly)}));
+  }));
+  for (const y of Object.keys(s.paychecks))
+    s.paychecks[y] = s.paychecks[y].map(p=>({date:p.date, actual:numOrNull(p.actual), projected:num(p.projected), note:String(p.note??'')}));
+  s.income.years = s.income.years.map(y=>({id:okId(y.id), label:String(y.label??''), netOverride:numOrNull(y.netOverride)}));
+  s.income.lines = s.income.lines.map(l=>({id:okId(l.id), name:String(l.name??''), sign:l.sign<0?-1:1,
+    amounts:Object.fromEntries(Object.entries(l.amounts||{}).map(([k,v])=>[k,num(v)]))}));
+  s.balance = num(s.balance);
+  s.balanceUpdated = isISODate(s.balanceUpdated) ? s.balanceUpdated : today();
+  s.typicalPaycheck = num(s.typicalPaycheck);
+  s.notes = String(s.notes ?? '');
+  return s;
+}
+// True only if the data has every list the screens rely on (used for saved data and imports).
+function isDataShapeOK(d){
+  const isObj = o => !!o && typeof o==='object' && !Array.isArray(o);
+  const inc = isObj(d) ? d.income : null;
+  return isObj(d)
+    && isObj(d.budgets) && BUDGETS.every(([b]) => isObj(d.budgets[b]) && TIERS.every(([t]) =>
+         Array.isArray(d.budgets[b][t]) && d.budgets[b][t].every(i => isObj(i) && typeof i.name==='string')))
+    && isObj(d.paychecks) && Object.entries(d.paychecks).every(([y,list]) =>
+         /^\d{4}$/.test(y) && Array.isArray(list) && list.every(p => isObj(p) && isISODate(p.date)))
+    && isObj(inc) && (Array.isArray(inc.years)
+         ? inc.years.every(isObj) && Array.isArray(inc.lines) && inc.lines.every(isObj)
+         : true);
+}
+function fresh(){ return normalize(clone(SEED)); }
+let loadProblem = false;
+function load(){
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); }
+  catch(e){ storageOK = false; return fresh(); }
+  if (!raw) return fresh();
+  try {
+    const s = JSON.parse(raw);
+    if (!isDataShapeOK(s)) throw new Error('bad shape');
+    return normalize(s);
+  } catch(e){
+    // Keep the unreadable copy under another name so nothing is lost, and warn on screen.
+    loadProblem = true;
+    try { localStorage.setItem(KEY+'.unreadable-'+Date.now(), raw); } catch(_){}
+    return fresh();
+  }
+}
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(state)); storageOK = true; }
+  catch(e){ storageOK = false; }
+}
+let state = load();
+let ui = { tab:'overview', level:'extras', year: String(new Date().getFullYear()) };
+try { Object.assign(ui, JSON.parse(localStorage.getItem(KEY+'.ui')||'{}')); } catch(e){}
+function saveUI(){ try { localStorage.setItem(KEY+'.ui', JSON.stringify(ui)); } catch(e){} }
+
+/* ---------- calculations ---------- */
+function tierTotal(b,t){ return sum(state.budgets[b][t].map(i=>i.monthly)); }
+function levelTotal(b,level){
+  const n = LEVELS.find(l=>l[0]===level)[2];
+  return sum(TIERS.slice(0,n).map(([t])=>tierTotal(b,t)));
+}
+let renderToday = today(); // refreshed at the start of every render
+function payStatus(p){
+  if (p.date > renderToday) return 'projected';
+  return (p.actual===null || p.actual===undefined || p.actual==='') ? 'confirm' : 'received';
+}
+// A paycheck belongs to the year of its date. Move any that sit in another year's list
+// (e.g. one added after Dec 25 lands in January), keep every list sorted, and show the
+// year the paycheck moved to.
+function fileOrMove(){
+  let movedTo = null;
+  for (const [y,list] of Object.entries(state.paychecks)){
+    for (let k=list.length-1; k>=0; k--){
+      const py = list[k].date.slice(0,4);
+      if (py !== y){
+        const [p] = list.splice(k,1);
+        (state.paychecks[py] ||= []).push(p);
+        movedTo = py; flash = `The ${niceDate(p.date)} paycheck was moved to ${py}.`;
+      }
+    }
+  }
+  Object.values(state.paychecks).forEach(l=>l.sort((a,b)=>a.date.localeCompare(b.date)));
+  if (movedTo){ ui.year = movedTo; saveUI(); }
+}
+function payExpected(p){ return payStatus(p)==='received' ? Number(p.actual) : Number(p.projected)||0; }
+function yearTotals(y){
+  const list = state.paychecks[y]||[];
+  return {
+    received: sum(list.filter(p=>payStatus(p)==='received').map(p=>p.actual)),
+    precalc: sum(list.map(p=>p.projected)),
+    expected: sum(list.map(payExpected)),
+    count: list.length,
+    receivedCount: list.filter(p=>payStatus(p)==='received').length,
+  };
+}
+// Net pay from the Paychecks tab for a year label, or null if that tab has no such year.
+function autoNet(label){ const l = state.paychecks[label]; return l && l.length ? yearTotals(label).expected : null; }
+function netPay(y){
+  if (y.netOverride!==null && y.netOverride!==undefined) return Number(y.netOverride)||0;
+  return autoNet(y.label) ?? 0;
+}
+
+/* ---------- render ---------- */
+let flash = ''; // one-time message shown at the top on the next render
+const TABS = [['overview','Overview'],['budget','Budget'],['paychecks','Paychecks'],['income','Income'],['settings','Backup & Notes']];
+// An identity for a focusable element that survives a redraw: its data-k for text boxes,
+// its action + position for buttons, and its group + position for ⋮⋮ grips.
+function focusKey(el){
+  if (!el || !el.dataset) return null;
+  if (el.dataset.k) return 'k|'+el.dataset.k;
+  if (el.classList.contains('grip')){ const h = groupEl(el); return h ? 'g|'+h.dataset.group+'|'+h.dataset.i : null; }
+  const d = el.dataset;
+  const host = el.closest('[data-group]');
+  return d.act || d.tab || d.year || d.level
+    ? ['a',d.act,d.tab,d.year,d.level,d.addto,d.i,d.y,host?.dataset.group,host?.dataset.i].join('|') : null;
+}
+const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>';
+const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+function effectiveTheme(){ return document.documentElement.dataset.theme || (darkQuery.matches ? 'dark' : 'light'); }
+function renderThemeButton(){
+  // Shows the mode you'll switch to: a sun while dark, a crescent moon while light.
+  const dark = effectiveTheme()==='dark', btn = document.getElementById('themeBtn');
+  btn.innerHTML = dark ? SUN : MOON;
+  btn.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+  btn.setAttribute('aria-label', btn.title);
+}
+function renderBanner(){
+  const msgs = [];
+  if (loadProblem) msgs.push(`Your saved data couldn't be read, so a blank slate is showing. The unreadable copy was kept in this browser. You can also restore a backup from the Backup &amp; Notes tab.`);
+  if (!storageOK) msgs.push(`Your browser is blocking storage, so changes won't be saved after you close this page. Use "Export backup" to keep them.`);
+  if (flash) msgs.push(esc(flash));
+  flash = '';
+  document.getElementById('banner').innerHTML = msgs.map(m=>`<div class="banner">${m}</div>`).join('');
+}
+let skipRefocus = false; // set when the focused box now belongs to a different item
+function render(){
+  const focus = skipRefocus ? null : focusKey(document.activeElement);
+  skipRefocus = false;
+  renderToday = today();
+  renderThemeButton();
+  document.getElementById('tabs').innerHTML = TABS.map(([k,l])=>`<button class="${ui.tab===k?'on':''}" data-tab="${k}"${ui.tab===k?' aria-current="page"':''}>${l}</button>`).join('');
+  renderBanner();
+  const views = {overview:viewOverview,budget:viewBudget,paychecks:viewPaychecks,income:viewIncome,settings:viewSettings};
+  document.getElementById('app').innerHTML = views[ui.tab]();
+  if (focus){
+    const el = [...document.querySelectorAll('input,button,textarea,.grip')].find(x=>focusKey(x)===focus);
+    if (el){ el.focus(); if (el.select && el.type!=='date' && el.tagName!=='TEXTAREA') el.select(); }
+  }
+}
+
+// Months the balance covers, as display text. With no monthly costs entered there's
+// nothing to divide by, so show a dash rather than a misleading "0.0".
+function coverage(bal, monthly){ return monthly > 0 ? (bal/monthly).toFixed(1) : '—'; }
+// Move-up/down (or left/right) buttons used instead of dragging on touch screens.
+function nudges(i, count, horizontal=false){
+  const [back, fwd, bl, fl] = horizontal ? ['◀','▶','Move left','Move right'] : ['▲','▼','Move up','Move down'];
+  return `<span class="nudges${horizontal?' x':''}">`
+    + `<button class="icon nudge" data-act="nudge" data-dir="-1" aria-label="${bl}"${i<=0?' disabled':''}>${back}</button>`
+    + `<button class="icon nudge" data-act="nudge" data-dir="1" aria-label="${fl}"${i>=count-1?' disabled':''}>${fwd}</button></span>`;
+}
+function viewOverview(){
+  const bal = Number(state.balance)||0;
+  const levelSeg = `<div class="seg">${LEVELS.map(([k,l])=>`<button class="${ui.level===k?'on':''}" data-level="${k}" aria-pressed="${ui.level===k}">${l}</button>`).join('')}</div>`;
+  const heroCards = BUDGETS.map(([b,label])=>{
+    const m = levelTotal(b,ui.level);
+    const months = coverage(bal, m);
+    return `<div class="card"><h3>${label} spending</h3>
+      <div class="big">${months} <small>months</small></div>
+      <div class="muted small">${money(m)}/month · ${LEVELS.find(l=>l[0]===ui.level)[1].toLowerCase()}</div></div>`;
+  }).join('');
+  const cards = BUDGETS.map(([b,label])=>`<div class="grid cov">${LEVELS.map(([lv,lvLabel])=>{
+    const m = levelTotal(b,lv); const months = coverage(bal, m);
+    const rows = TARGETS.map(([n,tl])=>{
+      const need = r2(m*n); const pct = need ? Math.min(bal/need,1)*100 : 100; const short = bal < need;
+      return `<div class="target"><span>${tl}</span>
+        <div class="bar ${short?'short':''}" title="${money(need)} needed"><i style="width:${pct.toFixed(1)}%"></i></div>
+        <span class="num">${money(need)} ${short?`<span class="bad">✗</span><br><span class="bad small">${money(need-bal)} short</span>`:'<span class="ok">✓</span>'}</span></div>`;
+    }).join('');
+    return `<div class="card"><div class="row" style="flex-wrap:nowrap;align-items:baseline"><h3 style="margin:0;min-width:0">${label} · ${lvLabel}</h3><span class="spacer"></span><b style="white-space:nowrap">${months} mo</b></div>
+      <div class="muted small" style="margin:2px 0 6px">${money(m)}/month</div>${rows}</div>`;
+  }).join('')}</div>`).join('');
+  return `
+  <div class="hero">
+    <div class="card"><h3>Dedicated balance</h3>
+      <input class="balance-input" type="number" step="0.01" data-k="balance" data-act="balance" value="${esc(bal)}" aria-label="Dedicated balance">
+      <div class="muted small" style="margin-top:6px">Last updated ${niceDate(state.balanceUpdated)}</div></div>
+    ${heroCards}
+  </div>
+  <div class="row" style="margin:6px 0 12px"><h2 style="margin:0">Coverage targets</h2><span class="spacer"></span>${levelSeg}</div>
+  <p class="muted small" style="margin-top:-6px">The switch above changes the headline numbers. The cards below show every combination.</p>
+  <div class="grid">${cards}</div>`;
+}
+
+function viewBudget(){
+  const cols = BUDGETS.map(([b,label])=>{
+    const other = b==='current' ? 'Adjusted' : 'Current';
+    const sections = TIERS.map(([t,tl])=>{
+      const items = state.budgets[b][t];
+      const rows = items.map((it,i)=>`<tr data-group="b:${b}:${t}" data-i="${i}">
+        <td class="gripcell"><span class="grip" draggable="true" tabindex="0" role="button" title="Drag to reorder (or focus and use ↑ ↓)" aria-label="Reorder: use the up and down arrow keys">⋮⋮</span>${nudges(i, items.length)}</td>
+        <td><input type="text" data-k="${b}.${t}.${i}.name" data-act="bname" value="${esc(it.name)}" aria-label="Item name"></td>
+        <td class="num"><input type="number" step="0.01" data-k="${b}.${t}.${i}.amt" data-act="bamt" value="${esc(it.monthly)}" aria-label="${esc(it.name)} monthly amount"></td>
+        <td class="num" style="width:64px"><button class="icon" title="Copy this line to the ${other} budget" aria-label="Copy ${esc(it.name)} to the ${other} budget" data-act="bcopy">⇄</button><button class="icon" title="Delete" aria-label="Delete ${esc(it.name)}" data-act="bdel">✕</button></td></tr>`).join('');
+      return `<h3 style="margin-top:18px">${tl}</h3>
+        <table><tbody>${rows}<tr class="total"><td></td><td>Subtotal</td><td class="num">${money(tierTotal(b,t))}</td><td></td></tr></tbody></table>
+        <button class="btn addrow small" data-act="badd" data-addto="b:${b}:${t}">+ Add line</button>`;
+    }).join('');
+    return `<div class="card"><div class="row"><h2 style="margin:0">${label}</h2><span class="spacer"></span><span class="muted small">per month</span></div>
+      ${sections}
+      <table style="margin-top:18px"><tbody><tr class="total"><td>Total per month</td><td class="num">${money(levelTotal(b,'extras'))}</td></tr></tbody></table></div>`;
+  }).join('');
+  return `<p class="muted small" style="margin-top:0">Changes save automatically. <span class="mouse-only">Drag ⋮⋮ (or click it and use the arrow keys)</span><span class="touch-only">Use ▲▼</span> to reorder a line within its section (the same line in the other budget moves too). ⇄ copies a line into the other budget.</p><div class="grid g2">${cols}</div>`;
+}
+
+function chart(list){
+  if (!list.length) return '';
+  const W=760,H=150,pad=24,max=Math.max(...list.map(payExpected),1);
+  const bw=(W-pad)/list.length;
+  const bars=list.map((p,i)=>{
+    const v=payExpected(p),h=(v/max)*(H-pad-8),s=payStatus(p);
+    const col = s==='received' ? 'var(--accent)' : s==='confirm' ? 'var(--warn)' : 'var(--proj)';
+    return `<rect x="${pad+i*bw+2}" y="${H-pad-h}" width="${Math.max(bw-4,2)}" height="${h}" rx="2" fill="${col}" opacity="${s==='projected'?.55:1}"><title>${niceDate(p.date)}: ${money(v)}</title></rect>`;
+  }).join('');
+  const months=[...new Set(list.map(p=>p.date.slice(0,7)))];
+  // Month labels are HTML (not SVG text) so they stay readable when the chart shrinks on a phone.
+  const labels=months.map(m=>{const i=list.findIndex(p=>p.date.startsWith(m));return `<span style="left:${((pad+i*bw+2)/W*100).toFixed(2)}%">${new Date(m+'-15T12:00').toLocaleDateString('en-US',{month:'short'})}</span>`;}).join('');
+  return `<svg viewBox="0 0 ${W} ${H-pad}" width="100%" role="img" aria-label="Bar chart of this year's paychecks">${bars}</svg>
+    <div class="chart-months" aria-hidden="true">${labels}</div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>Received</span><span><i style="background:var(--proj);opacity:.55"></i>Projected</span><span><i style="background:var(--warn)"></i>Needs confirming</span></div>`;
+}
+
+function viewPaychecks(){
+  const years = Object.keys(state.paychecks).sort();
+  if (!years.length) return `<h2>Paychecks</h2><div class="card"><p class="muted">No paychecks yet.</p><button class="btn" data-act="padd">+ Add paycheck</button></div>`;
+  if (!years.includes(ui.year)) ui.year = years[years.length-1]; // show the latest year if the saved one is gone
+  const y = ui.year, list = state.paychecks[y], t = yearTotals(y);
+  const seg = `<div class="seg">${years.map(k=>`<button class="${k===y?'on':''}" data-year="${esc(k)}" aria-pressed="${k===y}">${esc(k)}</button>`).join('')}</div>`;
+  const rows = list.map((p,i)=>{
+    const s = payStatus(p);
+    const pill = s==='received' ? '<span class="pill got">Received</span>' : s==='confirm' ? '<span class="pill need">Confirm amount</span>' : '<span class="pill">Projected</span>';
+    const diff = s==='received' ? r2(p.actual - p.projected) : null;
+    return `<tr class="${s==='projected'?'future':''}">
+      <td><input type="date" data-k="p.${i}.date" data-act="pdate" data-i="${i}" value="${esc(p.date)}" aria-label="Pay date"></td>
+      <td>${pill}</td>
+      <td class="num"><input type="number" step="0.01" placeholder="${s==='projected'?'—':'enter amount'}" data-k="p.${i}.actual" data-act="pactual" data-i="${i}" value="${esc(p.actual??'')}" aria-label="Actual amount for ${esc(niceDate(p.date))}"></td>
+      <td class="num"><input type="number" step="0.01" data-k="p.${i}.proj" data-act="pproj" data-i="${i}" value="${esc(p.projected??'')}" aria-label="Projected amount for ${esc(niceDate(p.date))}"></td>
+      <td class="num ${diff>0?'ok':diff<0?'bad':''}">${diff===null?'':(diff>0?'+':'')+money(diff)}</td>
+      <td><input type="text" data-k="p.${i}.note" data-act="pnote" data-i="${i}" value="${esc(p.note)}" placeholder="note" aria-label="Note for ${esc(niceDate(p.date))}"></td>
+      <td><button class="icon" title="Delete" aria-label="Delete the ${esc(niceDate(p.date))} paycheck" data-act="pdel" data-i="${i}">✕</button></td></tr>`;
+  }).join('');
+  return `
+  <div class="row" style="margin-bottom:14px"><h2 style="margin:0">Paychecks</h2><span class="spacer"></span>${seg}</div>
+  <div class="grid g3" style="margin-bottom:14px">
+    <div class="card stat"><span class="muted small">Received so far (${t.receivedCount} of ${t.count})</span><b>${money(t.received)}</b></div>
+    <div class="card stat"><span class="muted small">Expected ${y} total</span><b>${money(t.expected)}</b><span class="muted small">received + projected</span></div>
+    <div class="card stat"><span class="muted small">Projected (precalc) total</span><b>${money(t.precalc)}</b></div>
+  </div>
+  <div class="card" style="margin-bottom:14px">${chart(list)}</div>
+  <div class="card scroll">
+    <table><thead><tr><th>Pay date</th><th>Status</th><th class="num">Actual</th><th class="num">Projected</th><th class="num">Diff</th><th>Note</th><th></th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    <button class="btn addrow" data-act="padd">+ Add paycheck</button>
+    <span class="muted small" style="margin-left:8px">Paychecks dated after today are treated as projected. Once the date passes, enter the actual amount.</span>
+  </div>`;
+}
+
+function viewIncome(){
+  const {years, lines} = state.income;
+  const exp = r2(levelTotal('current','extras')*12);
+  const cols = years.map((y,yi)=>{
+    const net = netPay(y), disc = r2(net-exp);
+    const disp = r2(disc + sum(lines.map(l=>(l.sign<0?-1:1)*(Number(l.amounts[y.id])||0))));
+    return {y,yi,net,disc,disp};
+  });
+  const colAttrs = c => `data-group="inc-years" data-i="${c.yi}" data-axis="x"`;
+  const netCell = c => {
+    const auto = autoNet(c.y.label), over = c.y.netOverride!==null && c.y.netOverride!==undefined;
+    const hint = auto===null ? '<div class="muted small">typed in</div>'
+      : over ? `<button class="link small" data-act="inetreset" data-i="${c.yi}">Use Paychecks (${money(auto)})</button>`
+      : '<div class="muted small">from Paychecks</div>';
+    return `<input type="number" step="0.01" data-k="net.${esc(c.y.id)}" data-act="inet" data-i="${c.yi}" value="${esc(c.net)}" aria-label="Net pay ${esc(c.y.label)}">${hint}`;
+  };
+  const row = (label,f,cls='') => `<tr class="${cls}"><td>${label}</td>${cols.map(c=>`<td class="num" ${colAttrs(c)}>${f(c)}</td>`).join('')}<td></td></tr>`;
+  const head = cols.map(c=>`<th class="num" ${colAttrs(c)}><div class="row" style="flex-wrap:nowrap;gap:2px;justify-content:flex-end">
+      <span class="grip" draggable="true" tabindex="0" role="button" title="Drag to move this year (or focus and use ← →)" aria-label="Move year: use the left and right arrow keys">⋮⋮</span>${nudges(c.yi, cols.length, true)}
+      <input type="text" class="yearlabel" data-k="ylabel.${esc(c.y.id)}" data-act="ylabel" data-i="${c.yi}" value="${esc(c.y.label)}" aria-label="Year label">
+      <button class="icon" title="Delete this year" data-act="ydel" data-i="${c.yi}">✕</button></div></th>`).join('');
+  const lineRows = lines.map((l,li)=>`<tr data-group="inc-lines" data-i="${li}">
+      <td><div class="row" style="flex-wrap:nowrap;gap:6px"><span class="grip" draggable="true" tabindex="0" role="button" title="Drag to reorder (or focus and use ↑ ↓)" aria-label="Reorder: use the up and down arrow keys">⋮⋮</span>${nudges(li, lines.length)}
+        <button class="sign ${l.sign<0?'minus':'plus'}" data-act="lsign" data-i="${li}" title="${l.sign<0?'Subtracted from':'Added to'} Disposable. Click to switch.">${l.sign<0?'−':'+'}</button>
+        <input type="text" data-k="lname.${esc(l.id)}" data-act="lname" data-i="${li}" value="${esc(l.name)}" aria-label="Line name"></div></td>
+      ${cols.map(c=>`<td class="num" ${colAttrs(c)}><input type="number" step="0.01" data-k="lamt.${esc(l.id)}.${esc(c.y.id)}" data-act="lamt" data-i="${li}" data-y="${esc(c.y.id)}" value="${esc(Number(l.amounts[c.y.id])||0)}" aria-label="${esc(l.name)} ${esc(c.y.label)}"></td>`).join('')}
+      <td><button class="icon" title="Delete this line" data-act="ldel" data-i="${li}">✕</button></td></tr>`).join('');
+  const snapshot = !years.length
+    ? `<p class="muted">No years yet. <button class="btn small" data-act="yadd">+ Add year</button></p>`
+    : `<table><thead><tr><th></th>${head}<th><button class="btn small" data-act="yadd" title="Add a year column">+ Year</button></th></tr></thead><tbody>
+      ${row('Net pay',netCell)}
+      ${row('Expenses (Current, all subs × 12)',c=>'−'+money(exp))}
+      ${row('<b>Discretionary</b>',c=>`<b>${money(c.disc)}</b>`)}
+      ${lineRows}
+      <tr><td colspan="${cols.length+2}"><button class="btn small" data-act="ladd">+ Add line</button>
+        <span class="muted small" style="margin-left:6px">Click − / + to subtract or add a line.</span></td></tr>
+      ${row('Disposable',c=>`<span class="${c.disp<0?'bad':''}">${money(c.disp)}</span>`,'total')}
+    </tbody></table>`;
+  const monthlyBudget = levelTotal('current','extras');
+  const monthlyIncome = r2((Number(state.typicalPaycheck)||0)*2);
+  const monthlyDisc = r2(monthlyIncome - monthlyBudget);
+  return `
+  <div class="card scroll" style="margin-bottom:14px">
+    <h2>Yearly income snapshot</h2>
+    ${snapshot}
+    <p class="muted small">Disposable assumes no large unexpected expenses. <span class="mouse-only">Drag ⋮⋮ (or click it and use the arrow keys)</span><span class="touch-only">Use ◀▶ and ▲▼</span> to move a year or a line. If a year's label matches a year on the Paychecks tab, its net pay comes from there (received + projected), and you can type over it.</p>
+  </div>
+  <div class="card" style="max-width:520px">
+    <h2>Monthly discretionary</h2>
+    <table><tbody>
+      <tr><td>Typical paycheck</td><td class="num"><input type="number" step="0.01" data-k="typ" data-act="typ" value="${esc(state.typicalPaycheck)}" aria-label="Typical paycheck"></td></tr>
+      <tr><td>Approx. Monthly Income</td><td class="num">${money(monthlyIncome)}</td></tr>
+      <tr><td>Expenses (Current budget, all subs)</td><td class="num">−${money(monthlyBudget)}</td></tr>
+      <tr class="total"><td>Discretionary per month</td><td class="num ${monthlyDisc<0?'bad':''}">${money(monthlyDisc)}</td></tr>
+    </tbody></table>
+  </div>`;
+}
+
+function viewSettings(){
+  return `<div class="grid g2">
+  <div class="card">
+    <h2>Backup</h2>
+    <p class="muted small">Your data is saved on this device, inside this app. Export a backup now and then. On a computer it goes to your Downloads folder; on a phone, choose where to save or send it.</p>
+    <div class="row">
+      <button class="btn primary" data-act="export">Export backup</button>
+      <button class="btn" data-act="import">Import backup…</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+    <h3>Start over</h3>
+    <p class="muted small">This clears everything and starts over with a blank slate.</p>
+    <button class="btn danger" data-act="reset">Clear all data</button>
+  </div>
+  <div class="card">
+    <h2>Notes</h2>
+    <textarea data-k="notes" data-act="notes" aria-label="Notes">${esc(state.notes)}</textarea>
+  </div></div>`;
+}
+
+/* ---------- events ---------- */
+function commit(){ save(); render(); }
+// Typed edits are saved at once, but the screen is redrawn a moment later: after focus has
+// moved (so Tab lands in the next box) and after any click in progress has finished (so the
+// button under the mouse isn't replaced before the click registers).
+let pointerDown = false, redrawWaiting = false;
+document.addEventListener('pointerdown', ()=>{ pointerDown = true; }, true);
+function pointerReleased(){ pointerDown = false; if (redrawWaiting) setTimeout(redraw); }
+document.addEventListener('pointerup', pointerReleased, true);
+document.addEventListener('pointercancel', pointerReleased, true);
+window.addEventListener('blur', pointerReleased);
+function redraw(){ if (pointerDown) return; redrawWaiting = false; render(); }
+function commitSoon(){ save(); if (!redrawWaiting){ redrawWaiting = true; setTimeout(redraw); } }
+// Edits that don't change any totals or other cells: save only, no redraw at all.
+const QUIET = new Set(['bname','pnote','lname','notes']);
+// Budget controls sit in a row tagged data-group="b:<budget>:<tier>" data-i="<index>";
+// "+ Add line" names its section with data-addto instead (so it isn't a drag target).
+function budgetCtx(el){
+  const host = el.dataset.addto ? el : el.closest('[data-group^="b:"]');
+  const [,b,t] = (host.dataset.addto || host.dataset.group).split(':');
+  return {b, t, i:Number(host.dataset.i), list:state.budgets[b][t]};
+}
+
+document.addEventListener('click', e=>{
+  const el = e.target.closest('button'); if (!el) return;
+  const d = el.dataset;
+  if (d.tab){ ui.tab=d.tab; saveUI(); render(); return; }
+  if (d.level){ ui.level=d.level; saveUI(); render(); return; }
+  if (d.year){ ui.year=d.year; saveUI(); render(); return; }
+  const i = Number(d.i);
+  switch(d.act){
+    case 'nudge': { const host=groupEl(el), from=Number(host.dataset.i);
+      if (moveItem(host.dataset.group, from, from+Number(d.dir))) commit(); break; }
+    case 'theme': ui.theme = effectiveTheme()==='dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = ui.theme; saveUI(); renderThemeButton(); break;
+    case 'badd': { const {b,t,list}=budgetCtx(el); list.push({name:'New item',monthly:0}); commit();
+      const last=document.querySelector(`[data-k="${b}.${t}.${list.length-1}.name"]`); if(last){last.focus();last.select();} break; }
+    case 'bdel': { const {b,i,list}=budgetCtx(el), it=list[i];
+      if (confirm(`Delete "${it.name}" from the ${b} budget?`)){ list.splice(i,1); commit(); } break; }
+    case 'bcopy': { const {b,t,i,list}=budgetCtx(el), it=list[i], o=b==='current'?'adjusted':'current';
+      const ex=state.budgets[o][t].find(x=>x.name.trim().toLowerCase()===it.name.trim().toLowerCase());
+      if (ex){ if (confirm(`"${it.name}" is already in the other budget. Update its amount to ${money(it.monthly)}?`)) ex.monthly=it.monthly; else break; }
+      else state.budgets[o][t].push({name:it.name,monthly:it.monthly});
+      commit(); break; }
+    case 'padd': { if (!/^\d{4}$/.test(ui.year||'')) ui.year = String(new Date().getFullYear());
+      const list=(state.paychecks[ui.year] ||= []), prev=list[list.length-1];
+      // First paycheck of a year: today if that's the year shown, otherwise Jan 1 of it.
+      let date = today().startsWith(ui.year) ? today() : `${ui.year}-01-01`, proj=Number(state.typicalPaycheck)||0;
+      if (prev){ const dt=new Date(prev.date+'T12:00:00'); dt.setDate(dt.getDate()+14); date=isoDate(dt); proj=prev.projected; }
+      list.push({date,actual:null,projected:proj,note:''}); fileOrMove(); commit(); break; }
+    case 'pdel': { const p=state.paychecks[ui.year][i];
+      if (confirm(`Delete the paycheck dated ${niceDate(p.date)}?`)){ state.paychecks[ui.year].splice(i,1); commit(); } break; }
+    case 'yadd': { const Y=state.income.years, nums=Y.map(y=>parseInt(y.label,10)).filter(n=>!isNaN(n));
+      const label=String(nums.length ? Math.max(...nums)+1 : new Date().getFullYear());
+      const y={id:uid(), label, netOverride:null}, prev=Y[Y.length-1];
+      state.income.lines.forEach(l=>{ l.amounts[y.id] = prev ? (Number(l.amounts[prev.id])||0) : 0; });
+      Y.push(y); commit();
+      const el=document.querySelector(`[data-k="ylabel.${y.id}"]`); if(el){el.focus();el.select();} break; }
+    case 'ydel': { const y=state.income.years[i];
+      if (confirm(`Delete the "${y.label}" column? Its amounts will be removed.`)){
+        state.income.years.splice(i,1); state.income.lines.forEach(l=>delete l.amounts[y.id]); commit(); } break; }
+    case 'ladd': { const l={id:uid(), name:'New line', sign:-1, amounts:{}}; state.income.lines.push(l); commit();
+      const el=document.querySelector(`[data-k="lname.${esc(l.id)}"]`); if(el){el.focus();el.select();} break; }
+    case 'ldel': { const l=state.income.lines[i];
+      if (confirm(`Delete the "${l.name}" line?`)){ state.income.lines.splice(i,1); commit(); } break; }
+    case 'lsign': state.income.lines[i].sign = state.income.lines[i].sign<0 ? 1 : -1; commit(); break;
+    case 'inetreset': state.income.years[i].netOverride=null; commit(); break;
+    case 'export': {
+      const name=`emergency-fund-backup-${today()}.json`;
+      const blob=new Blob([JSON.stringify({app:'emergency-fund',version:1,exported:new Date().toISOString(),data:state},null,2)],{type:'application/json'});
+      // Phones and tablets: open the share sheet (Save to Files, AirDrop, Mail…), since downloads are unreliable there.
+      const file=new File([blob], name, {type:'application/json'});
+      if (matchMedia('(pointer:coarse)').matches && navigator.canShare && navigator.canShare({files:[file]})){
+        navigator.share({files:[file], title:'Emergency Fund backup'}).catch(()=>{}); break;
+      }
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); break; }
+    case 'import': document.getElementById('importFile').click(); break;
+    case 'reset': if (confirm('Clear ALL your data and start over? Consider exporting a backup first.')){ state=fresh(); commit(); } break;
+  }
+});
+
+document.addEventListener('change', e=>{
+  const el=e.target, d=el.dataset, i=Number(d.i), v=el.value;
+  if (el.id==='importFile'){
+    const f=el.files[0]; if(!f) return;
+    f.text().then(txt=>{
+      const obj=JSON.parse(txt), data=obj && obj.data || obj;
+      if (data && obj.exported) data.__when = new Date(obj.exported).toLocaleString();
+      if (!isDataShapeOK(data)) throw new Error('bad');
+      return data;
+    }).then(data=>{
+      const when = data.__when;
+      if (confirm(`Replace your current data with the backup${when ? ' from '+when : ''}?`)){
+        state = normalize(data); delete state.__when; loadProblem = false; commit(); alert('Backup restored.');
+      }
+    }, ()=>alert("That file doesn't look like an Emergency Fund backup.")).finally(()=>{el.value='';});
+    return;
+  }
+  const P = () => state.paychecks[ui.year][i];
+  switch(d.act){
+    case 'balance': state.balance=r2(v); state.balanceUpdated=today(); break;
+    case 'bname': { const c=budgetCtx(el); c.list[c.i].name=v; break; }
+    case 'bamt': { const c=budgetCtx(el); c.list[c.i].monthly=r2(v); break; }
+    case 'pdate': // re-sorting changes row positions: redraw now, and drop focus so it
+                  // doesn't land on whichever paycheck now sits in this row
+      if (isISODate(v)){ P().date=v; fileOrMove(); }
+      skipRefocus = true; el.blur(); commit(); return;
+    case 'pactual': P().actual = v==='' ? null : r2(v); break;
+    case 'pproj': P().projected=r2(v); break;
+    case 'pnote': P().note=v; break;
+    case 'inet': state.income.years[i].netOverride = v==='' ? null : r2(v); break;
+    case 'ylabel': state.income.years[i].label = v.trim(); break;
+    case 'lname': state.income.lines[i].name = v; break;
+    case 'lamt': state.income.lines[i].amounts[d.y] = r2(v); break;
+    case 'typ': state.typicalPaycheck=r2(v); break;
+    case 'notes': state.notes=v; break;
+    default: return;
+  }
+  if (QUIET.has(d.act)) save(); else commitSoon();
+});
+/* ---------- drag to reorder ----------
+   Anything with data-group + data-i can be dragged by its ⋮⋮ grip and dropped within the same group.
+   data-axis="x" marks columns (income years); every cell in a column shares its group and index. */
+let drag = null; // {group, i, axis, el}
+function cellsOf(group,i){ return document.querySelectorAll(`[data-group="${group}"][data-i="${i}"]`); }
+function clearDropMarks(){ document.querySelectorAll('.drop-before,.drop-after').forEach(r=>r.classList.remove('drop-before','drop-after')); }
+function groupEl(start, group){
+  for (let el=start; el && el.dataset; el=el.parentElement)
+    if (el.dataset.group && (!group || el.dataset.group===group)) return el;
+  return null;
+}
+function groupList(g){
+  if (g==='inc-lines') return state.income.lines;
+  if (g==='inc-years') return state.income.years;
+  const [,b,t] = g.split(':'); return state.budgets[b][t];
+}
+function moveItem(group, from, to){
+  const list = groupList(group);
+  if (to < 0 || to >= list.length || to === from) return false;
+  const [item] = list.splice(from,1); list.splice(to,0,item);
+  if (group.startsWith('b:')){ const [,b,t] = group.split(':'); mirrorMove(b, t, to); }
+  return true;
+}
+function dropTarget(e){
+  if (!drag) return null;
+  const el = groupEl(e.target, drag.group); if (!el) return null;
+  const r = el.getBoundingClientRect();
+  const after = drag.axis==='x' ? e.clientX > r.left + r.width/2 : e.clientY > r.top + r.height/2;
+  return {i:Number(el.dataset.i), after};
+}
+// After a line moves in one budget, move the same-named line in the other budget's matching
+// section so it sits next to the same neighbour. Lines missing from the other budget are skipped.
+function mirrorMove(b, t, to){
+  const key = x => x.name.trim().toLowerCase();
+  const src = state.budgets[b][t];
+  const dst = state.budgets[b==='current'?'adjusted':'current'][t];
+  const from = dst.findIndex(x=>key(x)===key(src[to]));
+  if (from < 0) return;
+  const [item] = dst.splice(from,1);
+  for (let j=to-1; j>=0; j--){ // nearest line above it that also exists in the other budget
+    const k = dst.findIndex(x=>key(x)===key(src[j]));
+    if (k >= 0){ dst.splice(k+1,0,item); return; }
+  }
+  for (let j=to+1; j<src.length; j++){ // otherwise, nearest line below it
+    const k = dst.findIndex(x=>key(x)===key(src[j]));
+    if (k >= 0){ dst.splice(k,0,item); return; }
+  }
+  dst.splice(from,0,item); // no shared neighbours: leave it where it was
+}
+document.addEventListener('dragstart', e=>{
+  if (!e.target.classList || !e.target.classList.contains('grip')) return;
+  const el = groupEl(e.target); if (!el) return;
+  drag = {group:el.dataset.group, i:Number(el.dataset.i), axis:el.dataset.axis||'y', el};
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', '');
+  e.dataTransfer.setDragImage(el, 20, el.offsetHeight/2);
+  setTimeout(()=>{ if (drag && drag.el===el) cellsOf(drag.group,drag.i).forEach(c=>c.classList.add('dragging')); });
+});
+document.addEventListener('dragover', e=>{
+  const tgt = dropTarget(e); if (!tgt) return;
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+  clearDropMarks(); cellsOf(drag.group,tgt.i).forEach(c=>c.classList.add(tgt.after ? 'drop-after' : 'drop-before'));
+});
+document.addEventListener('drop', e=>{
+  const tgt = dropTarget(e); if (!tgt) return;
+  e.preventDefault();
+  let to = tgt.i + (tgt.after ? 1 : 0);
+  if (drag.i < to) to--;
+  moveItem(drag.group, drag.i, to);
+  drag = null; clearDropMarks(); commit();
+});
+// Keyboard: focus a ⋮⋮ grip, then Up/Down (Left/Right for year columns) moves it one step.
+document.addEventListener('keydown', e=>{
+  if (!e.target.classList || !e.target.classList.contains('grip')) return;
+  const host = groupEl(e.target); if (!host) return;
+  const horizontal = host.dataset.axis === 'x';
+  const back = horizontal ? 'ArrowLeft' : 'ArrowUp', fwd = horizontal ? 'ArrowRight' : 'ArrowDown';
+  if (e.key !== back && e.key !== fwd) return;
+  e.preventDefault();
+  const group = host.dataset.group, from = Number(host.dataset.i), to = from + (e.key === fwd ? 1 : -1);
+  if (moveItem(group, from, to)){
+    commit();
+    const grip = cellsOf(group, to)[0]?.querySelector('.grip'); if (grip) grip.focus();
+  }
+});
+document.addEventListener('dragend', ()=>{ drag=null; document.querySelectorAll('.dragging').forEach(c=>c.classList.remove('dragging')); clearDropMarks(); });
+
+document.addEventListener('input', e=>{
+  if (e.target.dataset.act!=='notes') return;
+  const wasOK = storageOK; state.notes=e.target.value; save();
+  if (storageOK!==wasOK) renderBanner();
+});
+// Another open copy of the app saved: load its data so this one doesn't overwrite it.
+window.addEventListener('storage', e=>{ if (e.key===KEY){ state = load(); render(); } });
+// Keep the sun/moon icon right when following the Mac's appearance setting.
+darkQuery.addEventListener('change', renderThemeButton);
+
+// Saved screen settings could be stale or edited; fall back to defaults.
+if (!TABS.some(t=>t[0]===ui.tab)) ui.tab = 'overview';
+if (!LEVELS.some(l=>l[0]===ui.level)) ui.level = 'extras';
+if (ui.theme!=='light' && ui.theme!=='dark') delete ui.theme;
+render();
+
+// Installed-app extras: work offline, and ask the browser not to clear saved data.
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost'))
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+</script>
+</body>
+</html>
