@@ -26,6 +26,7 @@ try { const th = JSON.parse(localStorage.getItem('emergencyFundDistro.v1.ui')||'
   --accent:#2f6f5e; --accent-soft:#dcebe5; --warn:#b4542d; --warn-soft:#f6e3da; --proj:#77746c; --on-accent:#fff;
   --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.05),0 2px 8px rgba(0,0,0,.04);
 }
+/* Dark palette: it appears twice (automatic + manual toggle). Keep both copies identical. */
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
@@ -81,7 +82,7 @@ nav button.on{background:var(--surface);color:var(--text);box-shadow:var(--shado
 .big{font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
 .big small{font-size:18px;font-weight:500;color:var(--muted)}
 .balance-input{font-size:28px;font-weight:700;width:100%;max-width:240px}
-/* Balance box: amount on the left, a 2-column x 3-row currency picker on the right */
+/* Balance box: amount on the left, currency picker on the right ($ alone on top, then 2 x 2) */
 .balcard{display:flex;gap:14px;align-items:flex-start}
 .balmain{flex:1;min-width:0}
 .balrow{display:flex;align-items:center;gap:6px}
@@ -189,7 +190,7 @@ textarea{width:100%;min-height:120px;resize:vertical}
 
     <h3>Getting started</h3>
     <ul>
-      <li><b>Overview:</b> type your emergency fund balance at the top.</li>
+      <li><b>Overview:</b> type your emergency fund balance at the top, and pick your currency with the buttons beside it.</li>
       <li><b>Budget:</b> set your monthly costs. "Current" is what you spend now; "Adjusted" is a leaner version for a real emergency. Rename, add (+ Add line) or delete (✕) lines as you like.</li>
       <li><b>Paychecks:</b> tap "+ Add paycheck" to log your take-home pay.</li>
       <li><b>Income:</b> tap "+ Add year" to start the yearly snapshot.</li>
@@ -200,6 +201,7 @@ textarea{width:100%;min-height:120px;resize:vertical}
     <ul>
       <li>Your numbers are saved only on this device, inside this app. They are never sent anywhere, and other people using this site can't see them.</li>
       <li>Each device keeps its own copy. Your phone and your computer don't sync; use Export/Import to move data between them.</li>
+      <li>The Home Screen app and the same page opened in Safari don't share data either. Add it to your Home Screen first, then enter your numbers there (or use Export/Import to carry them over).</li>
       <li>Deleting the app from your Home Screen, or clearing Safari's website data, erases your numbers. Back up now and then.</li>
     </ul>
 
@@ -213,6 +215,7 @@ textarea{width:100%;min-height:120px;resize:vertical}
     <ul>
       <li>Reorder lines with <b>▲▼</b> on a phone, or drag <b>⋮⋮</b> on a computer. Moving a line in one budget also moves the same line in the other.</li>
       <li><b>⇄</b> copies a line into the other budget.</li>
+      <li>The currency buttons only change the symbol shown; they don't convert amounts between currencies.</li>
       <li>The sun/moon button switches between light and dark mode.</li>
       <li>On the Income tab, a year named like a Paychecks year (e.g. "2026") pulls its net pay from the Paychecks tab automatically. You can type over it.</li>
     </ul>
@@ -248,7 +251,13 @@ const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>
 // Local calendar date as YYYY-MM-DD (toISOString() would convert to UTC and can shift the day).
 const isoDate = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const today = () => isoDate(new Date());
-const isISODate = s => typeof s==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+// A real calendar date as YYYY-MM-DD in a sensible range (rejects 2026-13-45 and the
+// half-typed years like 0002 that a date box reports while you're still typing).
+const isISODate = s => {
+  if (typeof s!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [y,m,d] = s.split('-').map(Number), dt = new Date(y, m-1, d);
+  return y>=1900 && y<=2200 && dt.getFullYear()===y && dt.getMonth()===m-1 && dt.getDate()===d;
+};
 const niceDate = iso => new Date(iso+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 
 /* ---------- storage ---------- */
@@ -444,7 +453,7 @@ function viewOverview(){
   const cards = BUDGETS.map(([b,label])=>`<div class="grid cov">${LEVELS.map(([lv,lvLabel])=>{
     const m = levelTotal(b,lv); const months = coverage(bal, m);
     const rows = TARGETS.map(([n,tl])=>{
-      const need = r2(m*n); const pct = need ? Math.min(bal/need,1)*100 : 100; const short = bal < need;
+      const need = r2(m*n); const pct = need ? Math.max(0, Math.min(bal/need,1))*100 : 100; const short = bal < need;
       return `<div class="target"><span>${tl}</span>
         <div class="bar ${short?'short':''}" title="${money(need)} needed"><i style="width:${pct.toFixed(1)}%"></i></div>
         <span class="num">${money(need)} ${short?`<span class="bad">✗</span><br><span class="bad small">${money(need-bal)} short</span>`:'<span class="ok">✓</span>'}</span></div>`;
@@ -474,7 +483,7 @@ function viewBudget(){
       const items = state.budgets[b][t];
       const rows = items.map((it,i)=>`<tr data-group="b:${b}:${t}" data-i="${i}">
         <td class="gripcell"><span class="grip" draggable="true" tabindex="0" role="button" title="Drag to reorder (or focus and use ↑ ↓)" aria-label="Reorder: use the up and down arrow keys">⋮⋮</span>${nudges(i, items.length)}</td>
-        <td><input type="text" data-k="${b}.${t}.${i}.name" data-act="bname" value="${esc(it.name)}" aria-label="Item name"></td>
+        <td><input type="text" data-k="${b}.${t}.${i}.name" data-act="bname" value="${esc(it.name)}" aria-label="${esc(it.name)} name"></td>
         <td class="num"><input type="number" step="0.01" data-k="${b}.${t}.${i}.amt" data-act="bamt" value="${esc(it.monthly)}" aria-label="${esc(it.name)} monthly amount"></td>
         <td class="num" style="width:64px"><button class="icon" title="Copy this line to the ${other} budget" aria-label="Copy ${esc(it.name)} to the ${other} budget" data-act="bcopy">⇄</button><button class="icon" title="Delete" aria-label="Delete ${esc(it.name)}" data-act="bdel">✕</button></td></tr>`).join('');
       return `<h3 style="margin-top:18px">${tl}</h3>
@@ -493,7 +502,7 @@ function chart(list){
   const W=760,H=150,pad=24,max=Math.max(...list.map(payExpected),1);
   const bw=(W-pad)/list.length;
   const bars=list.map((p,i)=>{
-    const v=payExpected(p),h=(v/max)*(H-pad-8),s=payStatus(p);
+    const v=payExpected(p),h=Math.max(0,(v/max)*(H-pad-8)),s=payStatus(p);
     const col = s==='received' ? 'var(--accent)' : s==='confirm' ? 'var(--warn)' : 'var(--proj)';
     return `<rect x="${pad+i*bw+2}" y="${H-pad-h}" width="${Math.max(bw-4,2)}" height="${h}" rx="2" fill="${col}" opacity="${s==='projected'?.55:1}"><title>${niceDate(p.date)}: ${money(v)}</title></rect>`;
   }).join('');
@@ -560,13 +569,13 @@ function viewIncome(){
   const head = cols.map(c=>`<th class="num" ${colAttrs(c)}><div class="row" style="flex-wrap:nowrap;gap:2px;justify-content:flex-end">
       <span class="grip" draggable="true" tabindex="0" role="button" title="Drag to move this year (or focus and use ← →)" aria-label="Move year: use the left and right arrow keys">⋮⋮</span>${nudges(c.yi, cols.length, true)}
       <input type="text" class="yearlabel" data-k="ylabel.${esc(c.y.id)}" data-act="ylabel" data-i="${c.yi}" value="${esc(c.y.label)}" aria-label="Year label">
-      <button class="icon" title="Delete this year" data-act="ydel" data-i="${c.yi}">✕</button></div></th>`).join('');
+      <button class="icon" title="Delete this year" aria-label="Delete the ${esc(c.y.label)} year" data-act="ydel" data-i="${c.yi}">✕</button></div></th>`).join('');
   const lineRows = lines.map((l,li)=>`<tr data-group="inc-lines" data-i="${li}">
       <td><div class="row" style="flex-wrap:nowrap;gap:6px"><span class="grip" draggable="true" tabindex="0" role="button" title="Drag to reorder (or focus and use ↑ ↓)" aria-label="Reorder: use the up and down arrow keys">⋮⋮</span>${nudges(li, lines.length)}
-        <button class="sign ${l.sign<0?'minus':'plus'}" data-act="lsign" data-i="${li}" title="${l.sign<0?'Subtracted from':'Added to'} Disposable. Click to switch.">${l.sign<0?'−':'+'}</button>
+        <button class="sign ${l.sign<0?'minus':'plus'}" data-act="lsign" data-i="${li}" aria-label="${esc(l.name)}: ${l.sign<0?'subtracted from':'added to'} Disposable. Activate to switch." title="${l.sign<0?'Subtracted from':'Added to'} Disposable. Click to switch.">${l.sign<0?'−':'+'}</button>
         <input type="text" data-k="lname.${esc(l.id)}" data-act="lname" data-i="${li}" value="${esc(l.name)}" aria-label="Line name"></div></td>
       ${cols.map(c=>`<td class="num" ${colAttrs(c)}><input type="number" step="0.01" data-k="lamt.${esc(l.id)}.${esc(c.y.id)}" data-act="lamt" data-i="${li}" data-y="${esc(c.y.id)}" value="${esc(Number(l.amounts[c.y.id])||0)}" aria-label="${esc(l.name)} ${esc(c.y.label)}"></td>`).join('')}
-      <td><button class="icon" title="Delete this line" data-act="ldel" data-i="${li}">✕</button></td></tr>`).join('');
+      <td><button class="icon" title="Delete this line" aria-label="Delete ${esc(l.name)}" data-act="ldel" data-i="${li}">✕</button></td></tr>`).join('');
   const snapshot = !years.length
     ? `<p class="muted">No years yet. <button class="btn small" data-act="yadd">+ Add year</button></p>`
     : `<table><thead><tr><th></th>${head}<th><button class="btn small" data-act="yadd" title="Add a year column">+ Year</button></th></tr></thead><tbody>
@@ -708,13 +717,12 @@ document.addEventListener('change', e=>{
     const f=el.files[0]; if(!f) return;
     f.text().then(txt=>{
       const obj=JSON.parse(txt), data=obj && obj.data || obj;
-      if (data && obj.exported) data.__when = new Date(obj.exported).toLocaleString();
       if (!isDataShapeOK(data)) throw new Error('bad');
-      return data;
-    }).then(data=>{
-      const when = data.__when;
+      const at = obj.exported ? new Date(obj.exported) : null;
+      return {data, when: at && !isNaN(at) ? at.toLocaleString() : ''};
+    }).then(({data, when})=>{
       if (confirm(`Replace your current data with the backup${when ? ' from '+when : ''}?`)){
-        state = normalize(data); delete state.__when; loadProblem = false; commit(); alert('Backup restored.');
+        state = normalize(data); fileOrMove(); loadProblem = false; commit(); alert('Backup restored.');
       }
     }, ()=>alert("That file doesn't look like an Emergency Fund backup.")).finally(()=>{el.value='';});
     return;
@@ -724,9 +732,11 @@ document.addEventListener('change', e=>{
     case 'balance': state.balance=r2(v); state.balanceUpdated=today(); break;
     case 'bname': { const c=budgetCtx(el); c.list[c.i].name=v; break; }
     case 'bamt': { const c=budgetCtx(el); c.list[c.i].monthly=r2(v); break; }
-    case 'pdate': // re-sorting changes row positions: redraw now, and drop focus so it
-                  // doesn't land on whichever paycheck now sits in this row
-      if (isISODate(v)){ P().date=v; fileOrMove(); }
+    case 'pdate':
+      if (!isISODate(v)) return; // half-typed or cleared: leave the box alone until it's a real date
+      P().date=v; fileOrMove();
+      // Re-sorting changes row positions: redraw now, and drop focus so it
+      // doesn't land on whichever paycheck now sits in this row.
       skipRefocus = true; el.blur(); commit(); return;
     case 'pactual': P().actual = v==='' ? null : r2(v); break;
     case 'pproj': P().projected=r2(v); break;
@@ -739,7 +749,8 @@ document.addEventListener('change', e=>{
     case 'notes': state.notes=v; break;
     default: return;
   }
-  if (QUIET.has(d.act)) save(); else commitSoon();
+  if (QUIET.has(d.act)){ const wasOK = storageOK; save(); if (storageOK!==wasOK) renderBanner(); }
+  else commitSoon();
 });
 /* ---------- drag to reorder ----------
    Anything with data-group + data-i can be dragged by its ⋮⋮ grip and dropped within the same group.
@@ -799,10 +810,13 @@ document.addEventListener('dragstart', e=>{
   e.dataTransfer.setDragImage(el, 20, el.offsetHeight/2);
   setTimeout(()=>{ if (drag && drag.el===el) cellsOf(drag.group,drag.i).forEach(c=>c.classList.add('dragging')); });
 });
+let lastDrop = ''; // drop spot currently marked, so dragover only updates the page when it changes
 document.addEventListener('dragover', e=>{
   const tgt = dropTarget(e); if (!tgt) return;
   e.preventDefault(); e.dataTransfer.dropEffect = 'move';
-  clearDropMarks(); cellsOf(drag.group,tgt.i).forEach(c=>c.classList.add(tgt.after ? 'drop-after' : 'drop-before'));
+  const spot = tgt.i + (tgt.after ? 'a' : 'b'); if (spot===lastDrop) return;
+  lastDrop = spot; clearDropMarks();
+  cellsOf(drag.group,tgt.i).forEach(c=>c.classList.add(tgt.after ? 'drop-after' : 'drop-before'));
 });
 document.addEventListener('drop', e=>{
   const tgt = dropTarget(e); if (!tgt) return;
@@ -810,7 +824,7 @@ document.addEventListener('drop', e=>{
   let to = tgt.i + (tgt.after ? 1 : 0);
   if (drag.i < to) to--;
   moveItem(drag.group, drag.i, to);
-  drag = null; clearDropMarks(); commit();
+  drag = null; lastDrop = ''; clearDropMarks(); commit();
 });
 // Keyboard: focus a ⋮⋮ grip, then Up/Down (Left/Right for year columns) moves it one step.
 document.addEventListener('keydown', e=>{
@@ -826,7 +840,12 @@ document.addEventListener('keydown', e=>{
     const grip = cellsOf(group, to)[0]?.querySelector('.grip'); if (grip) grip.focus();
   }
 });
-document.addEventListener('dragend', ()=>{ drag=null; document.querySelectorAll('.dragging').forEach(c=>c.classList.remove('dragging')); clearDropMarks(); });
+document.addEventListener('dragend', ()=>{
+  drag=null; lastDrop='';
+  document.querySelectorAll('.dragging').forEach(c=>c.classList.remove('dragging'));
+  clearDropMarks();
+  pointerReleased(); // a drag can end without a pointerup; make sure typing redraws again
+});
 
 document.addEventListener('input', e=>{
   if (e.target.dataset.act!=='notes') return;
@@ -835,6 +854,11 @@ document.addEventListener('input', e=>{
 });
 // Another open copy of the app saved: load its data so this one doesn't overwrite it.
 window.addEventListener('storage', e=>{ if (e.key===KEY){ state = load(); render(); } });
+// Returning to the app on a new day (phones keep apps suspended for days): redraw so
+// "projected" vs "received" is judged against today's date.
+document.addEventListener('visibilitychange', ()=>{
+  if (document.visibilityState==='visible' && today()!==renderToday) render();
+});
 // Keep the sun/moon icon right when following the Mac's appearance setting.
 darkQuery.addEventListener('change', renderThemeButton);
 
@@ -843,7 +867,6 @@ if (!TABS.some(t=>t[0]===ui.tab)) ui.tab = 'overview';
 if (!LEVELS.some(l=>l[0]===ui.level)) ui.level = 'extras';
 if (ui.theme!=='light' && ui.theme!=='dark') delete ui.theme;
 render();
-
 // Help pop-up: "?" opens it; ✕, Esc, or tapping outside closes it.
 const helpDlg = document.getElementById('help');
 document.getElementById('helpBtn').addEventListener('click', ()=>helpDlg.showModal());
