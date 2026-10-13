@@ -81,6 +81,17 @@ nav button.on{background:var(--surface);color:var(--text);box-shadow:var(--shado
 .big{font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
 .big small{font-size:18px;font-weight:500;color:var(--muted)}
 .balance-input{font-size:28px;font-weight:700;width:100%;max-width:240px}
+/* Balance box: amount on the left, a 2-column x 3-row currency picker on the right */
+.balcard{display:flex;gap:14px;align-items:flex-start}
+.balmain{flex:1;min-width:0}
+.balrow{display:flex;align-items:center;gap:6px}
+.balrow .balance-input{flex:1;min-width:0}
+.cur-sym{font-size:24px;font-weight:700;color:var(--muted)}
+.curgrid{flex:none;display:grid;grid-template-columns:repeat(2,38px);gap:6px}
+.curbtn{width:38px;height:38px;display:grid;place-items:center;border:0;border-radius:10px;background:var(--surface-2);color:var(--text);font:inherit;font-size:16px;font-weight:700;cursor:pointer}
+.curbtn:hover{color:var(--accent)}
+.curbtn.on{background:var(--accent);color:var(--on-accent)}
+.curbtn:first-child{grid-column:1 / -1;justify-self:center} /* US Dollar alone on the top row */
 input,textarea,select{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:5px 8px}
 input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
 input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
@@ -218,8 +229,12 @@ const BUDGETS = [['current','Current'],['adjusted','Adjusted']];
 const TARGETS = [[3,'3 months'],[6,'6 months'],[9,'9 months'],[12,'1 year']];
 
 /* ---------- helpers ---------- */
-const fmt = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
-const money = n => fmt.format(n||0);
+// [code, symbol on the button, full name]. The choice is saved with the data (state.currency).
+const CURRENCIES = [['USD','$','US Dollar'],['EUR','€','Euro'],['JPY','¥','Japanese Yen'],
+                    ['GBP','£','Pound Sterling'],['CNY','元','Chinese Yuan']];
+const fmtCache = {};
+function currencyCode(){ return CURRENCIES.some(c=>c[0]===state.currency) ? state.currency : 'USD'; }
+const money = n => (fmtCache[currencyCode()] ||= new Intl.NumberFormat('en-US',{style:'currency',currency:currencyCode()})).format(n||0);
 // Shift the decimal point as text instead of multiplying, so 1.005 becomes 101 cents
 // (1.005*100 is 100.4999… in floating point). Falls back for exponent-formatted numbers.
 // Halves round away from zero, so -1.005 becomes -101 cents, mirroring 1.005 → 101.
@@ -369,7 +384,7 @@ function focusKey(el){
   const d = el.dataset;
   const host = el.closest('[data-group]');
   return d.act || d.tab || d.year || d.level
-    ? ['a',d.act,d.tab,d.year,d.level,d.addto,d.i,d.y,host?.dataset.group,host?.dataset.i].join('|') : null;
+    ? ['a',d.act,d.tab,d.year,d.level,d.addto,d.code,d.i,d.y,host?.dataset.group,host?.dataset.i].join('|') : null;
 }
 const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>';
 const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>';
@@ -439,9 +454,12 @@ function viewOverview(){
   }).join('')}</div>`).join('');
   return `
   <div class="hero">
-    <div class="card"><h3>Dedicated balance</h3>
-      <input class="balance-input" type="number" step="0.01" data-k="balance" data-act="balance" value="${esc(bal)}" aria-label="Dedicated balance">
+    <div class="card balcard"><div class="balmain"><h3>Dedicated balance</h3>
+      <div class="balrow"><span class="cur-sym" aria-hidden="true">${CURRENCIES.find(c=>c[0]===currencyCode())[1]}</span>
+      <input class="balance-input" type="number" step="0.01" data-k="balance" data-act="balance" value="${esc(bal)}" aria-label="Dedicated balance"></div>
       <div class="muted small" style="margin-top:6px">Last updated ${niceDate(state.balanceUpdated)}</div></div>
+      <div class="curgrid" role="group" aria-label="Currency">${CURRENCIES.map(([code,sym,name])=>
+        `<button class="curbtn${code===currencyCode()?' on':''}" data-act="currency" data-code="${code}" title="${name} (${code})" aria-label="${name}" aria-pressed="${code===currencyCode()}">${sym}</button>`).join('')}</div></div>
     ${heroCards}
   </div>
   <div class="row" style="margin:6px 0 12px"><h2 style="margin:0">Coverage targets</h2><span class="spacer"></span>${levelSeg}</div>
@@ -634,6 +652,7 @@ document.addEventListener('click', e=>{
   switch(d.act){
     case 'nudge': { const host=groupEl(el), from=Number(host.dataset.i);
       if (moveItem(host.dataset.group, from, from+Number(d.dir))) commit(); break; }
+    case 'currency': state.currency = d.code; commit(); break;
     case 'theme': ui.theme = effectiveTheme()==='dark' ? 'light' : 'dark';
       document.documentElement.dataset.theme = ui.theme; saveUI(); renderThemeButton(); break;
     case 'badd': { const {b,t,list}=budgetCtx(el); list.push({name:'New item',monthly:0}); commit();
