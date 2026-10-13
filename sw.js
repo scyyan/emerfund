@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app's files so it opens without internet.
 // VERSION changes automatically whenever the app files change, so phones pick up updates.
-const VERSION = 'efund-96fb6f6e9f';
+const VERSION = 'efund-ab443165aa';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

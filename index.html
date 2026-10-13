@@ -44,6 +44,16 @@ try { const th = JSON.parse(localStorage.getItem('emergencyFundDistro.v1.ui')||'
 .theme-btn{flex:none;width:38px;height:38px;display:grid;place-items:center;border:0;border-radius:10px;background:var(--surface-2);color:var(--text);cursor:pointer}
 .theme-btn:hover{color:var(--accent)}
 .theme-btn svg{width:18px;height:18px}
+.themecol{display:flex;flex-direction:column;gap:6px}
+.help-btn{font:inherit;font-size:18px;font-weight:700}
+#help{width:calc(100% - 32px);max-width:560px;max-height:85vh;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 10px 40px rgba(0,0,0,.25)}
+#help::backdrop{background:rgba(0,0,0,.45)}
+#help .helphead{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--line)}
+#help .helphead h2{margin:0}
+#help .helpbody{padding:4px 20px 20px}
+#help h3{margin:18px 0 6px}
+#help p,#help li{font-size:14px;line-height:1.5}
+#help ul,#help ol{padding-left:20px;margin:6px 0}
 .chart-months{position:relative;height:16px;font-size:11px;color:var(--muted);margin-top:2px}
 .chart-months span{position:absolute;top:0;white-space:nowrap}
 *{box-sizing:border-box}
@@ -145,12 +155,56 @@ textarea{width:100%;min-height:120px;resize:vertical}
   <header>
     <h1>Emergency Fund</h1>
     <div class="headright">
-      <button id="themeBtn" class="theme-btn" data-act="theme"></button>
+      <div class="themecol"><button id="themeBtn" class="theme-btn" data-act="theme"></button><button id="helpBtn" class="theme-btn help-btn" title="How to use this app" aria-label="How to use this app" aria-haspopup="dialog">?</button></div>
       <nav id="tabs" aria-label="Sections"></nav>
     </div>
   </header>
   <div id="banner"></div>
   <main id="app"></main>
+<dialog id="help" aria-labelledby="helpTitle">
+  <div class="helphead"><h2 id="helpTitle">How to use E-Fund</h2>
+    <form method="dialog"><button class="icon" aria-label="Close help" style="font-size:18px">✕</button></form></div>
+  <div class="helpbody">
+    <p>A simple, private app for tracking your emergency fund: how many months your savings would cover, your monthly budget, your paychecks, and a yearly income snapshot.</p>
+
+    <h3>Install it on your iPhone</h3>
+    <ol>
+      <li>Open this page in <b>Safari</b>.</li>
+      <li>Tap <b>Share</b> → <b>Add to Home Screen</b> → <b>Add</b>.</li>
+      <li>Open it from the Home Screen. After the first time, it works without internet.</li>
+    </ol>
+
+    <h3>Getting started</h3>
+    <ul>
+      <li><b>Overview:</b> type your emergency fund balance at the top.</li>
+      <li><b>Budget:</b> set your monthly costs. "Current" is what you spend now; "Adjusted" is a leaner version for a real emergency. Rename, add (+ Add line) or delete (✕) lines as you like.</li>
+      <li><b>Paychecks:</b> tap "+ Add paycheck" to log your take-home pay.</li>
+      <li><b>Income:</b> tap "+ Add year" to start the yearly snapshot.</li>
+    </ul>
+    <p>Everything saves automatically as you type.</p>
+
+    <h3>Your data is private</h3>
+    <ul>
+      <li>Your numbers are saved only on this device, inside this app. They are never sent anywhere, and other people using this site can't see them.</li>
+      <li>Each device keeps its own copy. Your phone and your computer don't sync; use Export/Import to move data between them.</li>
+      <li>Deleting the app from your Home Screen, or clearing Safari's website data, erases your numbers. Back up now and then.</li>
+    </ul>
+
+    <h3>Back up and restore</h3>
+    <ul>
+      <li>Go to <b>Backup &amp; Notes</b> → <b>Export backup</b>. On a phone, choose <b>Save to Files</b> or <b>AirDrop</b>; on a computer it goes to Downloads.</li>
+      <li>To restore, or to move your data to another device, use <b>Import backup…</b> on the same tab.</li>
+    </ul>
+
+    <h3>Tips</h3>
+    <ul>
+      <li>Reorder lines with <b>▲▼</b> on a phone, or drag <b>⋮⋮</b> on a computer. Moving a line in one budget also moves the same line in the other.</li>
+      <li><b>⇄</b> copies a line into the other budget.</li>
+      <li>The sun/moon button switches between light and dark mode.</li>
+      <li>On the Income tab, a year named like a Paychecks year (e.g. "2026") pulls its net pay from the Paychecks tab automatically. You can type over it.</li>
+    </ul>
+  </div>
+</dialog>
 </div>
 
 <script>
@@ -768,6 +822,11 @@ if (!TABS.some(t=>t[0]===ui.tab)) ui.tab = 'overview';
 if (!LEVELS.some(l=>l[0]===ui.level)) ui.level = 'extras';
 if (ui.theme!=='light' && ui.theme!=='dark') delete ui.theme;
 render();
+
+// Help pop-up: "?" opens it; ✕, Esc, or tapping outside closes it.
+const helpDlg = document.getElementById('help');
+document.getElementById('helpBtn').addEventListener('click', ()=>helpDlg.showModal());
+helpDlg.addEventListener('click', e=>{ if (e.target === helpDlg) helpDlg.close(); });
 
 // Installed-app extras: work offline, and ask the browser not to clear saved data.
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost'))
