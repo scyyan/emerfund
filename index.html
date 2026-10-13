@@ -156,6 +156,14 @@ tr.future input{color:var(--proj)}
 .stat b{font-size:22px;letter-spacing:-.01em}
 .banner{background:var(--warn-soft);color:var(--warn);padding:10px 14px;border-radius:10px;margin-bottom:14px;font-weight:500}
 .scroll{overflow-x:auto}
+/* Sideways-scrolling tables get a visible bar above and below (phones hide their own scroll
+   bars until you're already scrolling). The bars only appear when the table is wider than the box. */
+.xscroll{overflow-x:auto;scrollbar-width:none}
+.xscroll::-webkit-scrollbar{display:none}
+.xbar{display:none;position:relative;height:16px;cursor:pointer;touch-action:none}
+.xbar::before{content:'';position:absolute;left:0;right:0;top:5px;height:6px;border-radius:3px;background:var(--surface-2)}
+.xbar i{position:absolute;top:5px;height:6px;border-radius:3px;background:var(--muted);opacity:.75}
+.xwrap.overflow .xbar{display:block}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .spacer{flex:1}
 textarea{width:100%;min-height:120px;resize:vertical}
@@ -415,7 +423,37 @@ function renderBanner(){
   document.getElementById('banner').innerHTML = msgs.map(m=>`<div class="banner">${m}</div>`).join('');
 }
 let skipRefocus = false; // set when the focused box now belongs to a different item
+// A sideways-scrolling area with a bar above and below that shows (and controls) the position.
+function hscroll(id, inner){
+  const bar = '<div class="xbar" aria-hidden="true"><i></i></div>';
+  return `<div class="xwrap" data-x="${id}">${bar}<div class="xscroll">${inner}</div>${bar}</div>`;
+}
+function setupHScroll(wrap){
+  const sc = wrap.querySelector('.xscroll'), bars = wrap.querySelectorAll('.xbar');
+  const update = ()=>{
+    const over = sc.scrollWidth > sc.clientWidth + 1;
+    wrap.classList.toggle('overflow', over);
+    if (!over) return;
+    const w = sc.clientWidth / sc.scrollWidth * 100, l = sc.scrollLeft / sc.scrollWidth * 100;
+    bars.forEach(b=>{ const th = b.firstChild; th.style.width = w+'%'; th.style.left = l+'%'; });
+  };
+  sc.addEventListener('scroll', update, {passive:true});
+  // Tap or drag on a bar to move the table there.
+  bars.forEach(bar=>bar.addEventListener('pointerdown', e=>{
+    const go = ev=>{ const r = bar.getBoundingClientRect();
+      sc.scrollLeft = (ev.clientX - r.left) / r.width * sc.scrollWidth - sc.clientWidth/2; };
+    bar.setPointerCapture(e.pointerId); go(e);
+    bar.onpointermove = go;
+    bar.onpointerup = bar.onpointercancel = ()=>{ bar.onpointermove = null; };
+  }));
+  wrap._update = update;
+  update();
+}
+window.addEventListener('resize', ()=>document.querySelectorAll('.xwrap').forEach(w=>w._update && w._update()));
 function render(){
+  // Remember how far each sideways table was scrolled, so editing doesn't jump it back left.
+  const scrolled = {};
+  document.querySelectorAll('.xwrap').forEach(w=>{ scrolled[w.dataset.x] = w.querySelector('.xscroll').scrollLeft; });
   const focus = skipRefocus ? null : focusKey(document.activeElement);
   skipRefocus = false;
   renderToday = today();
@@ -424,6 +462,10 @@ function render(){
   renderBanner();
   const views = {overview:viewOverview,budget:viewBudget,paychecks:viewPaychecks,income:viewIncome,settings:viewSettings};
   document.getElementById('app').innerHTML = views[ui.tab]();
+  document.querySelectorAll('.xwrap').forEach(w=>{
+    if (scrolled[w.dataset.x]) w.querySelector('.xscroll').scrollLeft = scrolled[w.dataset.x];
+    setupHScroll(w);
+  });
   if (focus){
     const el = [...document.querySelectorAll('input,button,textarea,.grip')].find(x=>focusKey(x)===focus);
     if (el){ el.focus(); if (el.select && el.type!=='date' && el.tagName!=='TEXTAREA') el.select(); }
@@ -541,9 +583,9 @@ function viewPaychecks(){
     <div class="card stat"><span class="muted small">Projected (precalc) total</span><b>${money(t.precalc)}</b></div>
   </div>
   <div class="card" style="margin-bottom:14px">${chart(list)}</div>
-  <div class="card scroll">
-    <table><thead><tr><th>Pay date</th><th>Status</th><th class="num">Actual</th><th class="num">Projected</th><th class="num">Diff</th><th>Note</th><th></th></tr></thead>
-    <tbody>${rows}</tbody></table>
+  <div class="card">
+    ${hscroll('pay', `<table><thead><tr><th>Pay date</th><th>Status</th><th class="num">Actual</th><th class="num">Projected</th><th class="num">Diff</th><th>Note</th><th></th></tr></thead>
+    <tbody>${rows}</tbody></table>`)}
     <button class="btn addrow" data-act="padd">+ Add paycheck</button>
     <span class="muted small" style="margin-left:8px">Paychecks dated after today are treated as projected. Once the date passes, enter the actual amount.</span>
   </div>`;
@@ -580,7 +622,7 @@ function viewIncome(){
     ? `<p class="muted">No years yet. <button class="btn small" data-act="yadd">+ Add year</button></p>`
     : `<table><thead><tr><th></th>${head}<th><button class="btn small" data-act="yadd" title="Add a year column">+ Year</button></th></tr></thead><tbody>
       ${row('Net pay',netCell)}
-      ${row('Expenses (Current, all subs × 12)',c=>'−'+money(exp))}
+      ${row('Expenses (Current, all expenses × 12)',c=>'−'+money(exp))}
       ${row('<b>Discretionary</b>',c=>`<b>${money(c.disc)}</b>`)}
       ${lineRows}
       <tr><td colspan="${cols.length+2}"><button class="btn small" data-act="ladd">+ Add line</button>
@@ -591,9 +633,9 @@ function viewIncome(){
   const monthlyIncome = r2((Number(state.typicalPaycheck)||0)*2);
   const monthlyDisc = r2(monthlyIncome - monthlyBudget);
   return `
-  <div class="card scroll" style="margin-bottom:14px">
+  <div class="card" style="margin-bottom:14px">
     <h2>Yearly income snapshot</h2>
-    ${snapshot}
+    ${hscroll('inc', snapshot)}
     <p class="muted small">Disposable assumes no large unexpected expenses. <span class="mouse-only">Drag ⋮⋮ (or click it and use the arrow keys)</span><span class="touch-only">Use ◀▶ and ▲▼</span> to move a year or a line. If a year's label matches a year on the Paychecks tab, its net pay comes from there (received + projected), and you can type over it.</p>
   </div>
   <div class="card" style="max-width:520px">
@@ -601,7 +643,7 @@ function viewIncome(){
     <table><tbody>
       <tr><td>Typical paycheck</td><td class="num"><input type="number" step="0.01" data-k="typ" data-act="typ" value="${esc(state.typicalPaycheck)}" aria-label="Typical paycheck"></td></tr>
       <tr><td>Approx. Monthly Income</td><td class="num">${money(monthlyIncome)}</td></tr>
-      <tr><td>Expenses (Current budget, all subs)</td><td class="num">−${money(monthlyBudget)}</td></tr>
+      <tr><td>Expenses (Current budget, all expenses)</td><td class="num">−${money(monthlyBudget)}</td></tr>
       <tr class="total"><td>Discretionary per month</td><td class="num ${monthlyDisc<0?'bad':''}">${money(monthlyDisc)}</td></tr>
     </tbody></table>
   </div>`;
