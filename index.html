@@ -226,8 +226,8 @@ textarea{width:100%;min-height:120px;resize:vertical}
 <script>
 const SEED = {"balance":0,"balanceUpdated":null,"budgets":{"current":{"necessities":[{"name":"Housing (rent/mortgage)","monthly":0},{"name":"Groceries","monthly":0},{"name":"Dining Out","monthly":0},{"name":"Transportation","monthly":0},{"name":"Fuel","monthly":0},{"name":"Auto Insurance","monthly":0},{"name":"Electricity","monthly":0},{"name":"Gas","monthly":0},{"name":"Water","monthly":0},{"name":"Internet","monthly":0},{"name":"Phone","monthly":0}],"minimalSubs":[{"name":"Streaming","monthly":0}],"extras":[{"name":"Gym","monthly":0}]},"adjusted":{"necessities":[{"name":"Housing (rent/mortgage)","monthly":0},{"name":"Groceries","monthly":0},{"name":"Dining Out","monthly":0},{"name":"Transportation","monthly":0},{"name":"Fuel","monthly":0},{"name":"Auto Insurance","monthly":0},{"name":"Electricity","monthly":0},{"name":"Gas","monthly":0},{"name":"Water","monthly":0},{"name":"Internet","monthly":0},{"name":"Phone","monthly":0}],"minimalSubs":[{"name":"Streaming","monthly":0}],"extras":[{"name":"Gym","monthly":0}]}},"paychecks":{},"income":{"years":[],"lines":[{"id":"roth","name":"Roth IRA","sign":-1,"amounts":{}}]},"typicalPaycheck":0,"notes":""};
 const KEY = 'emergencyFundDistro.v1';
-const TIERS = [['necessities','Necessities'],['minimalSubs','Minimal Subscriptions'],['extras','Extra Expenses']];
-const LEVELS = [['necessities','Necessities only',1],['minimalSubs','+ Minimal subs',2],['extras','+ All subs',3]];
+const TIERS = [['necessities','Necessities'],['minimalSubs','Subscriptions/Recurring'],['extras','Extra Expenses']];
+const LEVELS = [['necessities','Necessities only',1],['minimalSubs','+ Subs',2],['extras','+ All Expenses',3]];
 const BUDGETS = [['current','Current'],['adjusted','Adjusted']];
 const TARGETS = [[3,'3 months'],[6,'6 months'],[9,'9 months'],[12,'1 year']];
 
