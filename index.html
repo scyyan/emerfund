@@ -124,7 +124,20 @@ h3{font-size:14px;font-weight:650;margin:0 0 8px;color:var(--text)}
 .ring-key{display:inline-block;width:11px;height:11px;border-radius:50%;border:2.5px solid var(--text);margin-right:6px;vertical-align:-1px}
 .pin.edge-r{transform:translate(-100%,-100%)}
 .pin.edge-l{transform:translate(0,-100%)}
-.duo{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:6px}
+/* Finish line: the user's savings target, in ink (orange stays "you are here") */
+.profile .finishline{stroke:var(--text);stroke-width:2}
+.finish{position:absolute;top:0;font-size:12px;font-weight:750;padding:4px 10px;border-radius:99px;white-space:nowrap;background:var(--text);color:var(--bg)}
+.finish.l{transform:translateX(calc(-100% - 8px))}
+.finish.r{transform:translateX(8px)}
+.lbl-row{display:flex;align-items:center;gap:8px}
+.tseg{display:inline-flex;background:var(--surface-2);border-radius:8px;padding:2px;gap:2px}
+.tseg button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;cursor:pointer;min-width:30px}
+.tseg button:hover{color:var(--text)}
+.tseg button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(20,35,28,.12)}
+.target-input{font-size:28px;font-weight:780;letter-spacing:-.025em;width:100%;max-width:220px;padding:2px 8px;margin:2px 0 2px -9px;font-variant-numeric:tabular-nums}
+.target-input::placeholder{color:var(--muted);font-weight:600;font-size:20px;letter-spacing:0}
+.tgt .muted{display:block}
+.duo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:6px}
 .duo>div{padding:16px 0}
 .duo>div+div{border-left:1px solid var(--line);padding-left:20px}
 .stat b{display:block;font-size:28px;font-weight:780;letter-spacing:-.025em;margin-top:2px}
@@ -302,6 +315,11 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
   .fig span{font-size:20px}
   .cheer{font-size:15px}
   .duo>div+div,.strip>div+div{padding-left:14px}
+  /* Balance and Target side by side; Adjusted gets its own row below */
+  .duo{grid-template-columns:1fr 1fr}
+  .duo>div:nth-child(3){grid-column:1/-1;border-left:0;padding-left:0;border-top:1px solid var(--line)}
+  .target-input{font-size:20px;max-width:none}
+  .target-input::placeholder{font-size:17px}
   .stat b{font-size:22px}
   .balance-input{font-size:22px}
   .strip{grid-template-columns:1fr 1fr}
@@ -359,7 +377,8 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 
     <h3>Getting started</h3>
     <ul>
-      <li><b>Overview:</b> type your emergency fund balance at the top, and pick your currency with the buttons beside it.</li>
+      <li><b>Overview:</b> type your emergency fund balance under the chart, and pick your currency with the buttons beside it.</li>
+      <li><b>Target:</b> set your savings goal beside the balance, in money or in months (tap $ or mo). It shows up on the climb as a checkered finish line.</li>
       <li><b>Budget:</b> set your monthly costs. "Current" is what you spend now; "Adjusted" is a leaner version for a real emergency. Rename, add (+ Add line) or delete (the X button) lines as you like.</li>
       <li><b>Paychecks:</b> tap "+ Add paycheck" to log your take-home pay.</li>
       <li><b>Income:</b> tap "+ Add year" to start the yearly snapshot.</li>
@@ -478,6 +497,9 @@ function normalize(s){
   s.balanceUpdated = isISODate(s.balanceUpdated) ? s.balanceUpdated : today();
   s.typicalPaycheck = num(s.typicalPaycheck);
   s.notes = String(s.notes ?? '');
+  // Savings target (the finish line): dollars or months, null when not set.
+  const tg = s.target || {};
+  s.target = {mode: tg.mode==='months' ? 'months' : 'dollars', value: numOrNull(tg.value) > 0 ? numOrNull(tg.value) : null};
   return s;
 }
 // True only if the data has every list the screens rely on (used for saved data and imports).
@@ -587,7 +609,7 @@ function focusKey(el){
   const d = el.dataset;
   const host = el.closest('[data-group]');
   return d.act || d.tab || d.year || d.level
-    ? ['a',d.act,d.tab,d.year,d.level,d.addto,d.code,d.i,d.y,host?.dataset.group,host?.dataset.i].join('|') : null;
+    ? ['a',d.act,d.tab,d.year,d.level,d.addto,d.code,d.mode,d.i,d.y,host?.dataset.group,host?.dataset.i].join('|') : null;
 }
 const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>';
 const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>';
@@ -666,6 +688,15 @@ function render(){
 // Months the balance covers, as display text. With no monthly costs entered there's
 // nothing to divide by, so show a dash rather than a misleading "0.0".
 function coverage(bal, monthly){ return monthly > 0 ? (bal/monthly).toFixed(1) : '—'; }
+// The savings target in both units at this monthly cost, or null when none is set.
+// months is null when a dollar target can't be placed (no monthly costs entered yet).
+function targetInfo(bal, monthly){
+  const t = state.target; if (!t || !(t.value > 0)) return null;
+  const dollars = t.mode==='months' ? (monthly > 0 ? r2(t.value*monthly) : null) : t.value;
+  const months = t.mode==='months' ? t.value : (monthly > 0 ? t.value/monthly : null);
+  if (dollars===null) return {months, dollars, reached:false, toGo:null, pct:null};
+  return {months, dollars, reached: bal >= dollars, toGo: Math.max(0, r2(dollars - bal)), pct: Math.max(0, Math.min(100, Math.floor(bal/dollars*100)))};
+}
 // Move-up/down (or left/right) buttons used instead of dragging on touch screens.
 function nudges(i, count, horizontal=false){
   const [back, fwd, bl, fl] = horizontal ? [ic('left'),ic('right'),'Move left','Move right'] : [ic('up'),ic('down'),'Move up','Move down'];
@@ -674,7 +705,11 @@ function nudges(i, count, horizontal=false){
     + `<button class="icon nudge" data-act="nudge" data-dir="1" aria-label="${fl}"${i>=count-1?' disabled':''}>${fwd}</button></span>`;
 }
 // One encouraging line about where the climb stands, with the amount to the next camp.
-function cheer(bal, monthly){
+function cheer(bal, monthly, ti){
+  if (ti && ti.dollars !== null && bal > 0){
+    if (ti.reached) return `<strong>Finish line crossed!</strong> ${money(r2(bal - ti.dollars))} past your goal.`;
+    return `<strong>${ti.pct}% of the way.</strong> ${money(ti.toGo)} to your finish line.`;
+  }
   if (!(monthly > 0)) return `<strong>Set your trail.</strong> Add your monthly costs on the Budget tab to see how far your fund reaches.`;
   const m = bal / monthly, toGo = n => money(Math.max(0, r2(monthly*n - bal)));
   if (m >= 12){
@@ -686,16 +721,17 @@ function cheer(bal, monthly){
   if (m >= 6) return `<strong>Halfway up.</strong> ${toGo(9)} more reaches the 9-month camp.`;
   if (m >= 3) return `<strong>First camp reached.</strong> ${toGo(6)} more reaches 6 months.`;
   if (m > 0) return `<strong>You're on the trail.</strong> ${toGo(3)} more reaches your first camp at 3 months.`;
-  return `<strong>Every climb starts here.</strong> Enter your dedicated balance below to see how far it reaches.`;
+  return `<strong>Every climb starts here.</strong> Enter your current savings balance below to see how far it reaches.`;
 }
 // The signature: coverage drawn as terrain climbed past camps at 3, 6, 9 and 12 months,
 // with "you are here" for current spending and a second marker for the Adjusted budget.
-function profile(bal, cur, adj, tier){
+function profile(bal, cur, adj, tier, ti){
   const wrapW = (document.querySelector('.wrap')||{}).clientWidth || 720;
   const W = Math.max(300, Math.min(1040, wrapW - 40)), H = W < 560 ? 196 : 236;
   const base = H - 30, top = 40;
   const mc = cur > 0 ? Math.max(0, bal/cur) : 0, ma = adj > 0 ? Math.max(0, bal/adj) : 0;
-  const xMax = Math.max(12.8, Math.max(mc, ma) * 1.08);
+  const mt = ti && ti.months > 0 ? ti.months : 0; // the finish line, in months
+  const xMax = Math.max(12.8, Math.max(mc, ma, mt) * 1.08);
   const X = m => 6 + Math.min(m, xMax) / xMax * (W - 12);
   // Elevation = accumulated slope, always positive (so higher always means more coverage), easing
   // to a flat bench at each camp and varying between them like a real trail.
@@ -720,20 +756,29 @@ function profile(bal, cur, adj, tier){
   const pin = (m, cls, text, lift) => { const x = X(m), edge = x > W-90 ? ' edge-r' : x < 90 ? ' edge-l' : '';
     return `<span class="pin${cls}${edge}" style="left:${(x/W*100).toFixed(2)}%;top:${((E(m)-lift)/H*100).toFixed(2)}%">${text}</span>`; };
   const close = Math.abs(X(ma) - X(mc)) < 130, narrow = W < 560; // narrow: the ring alone, keyed by the stat below
-  return `<div class="profile" role="img" aria-label="Coverage climb: ${coverage(bal,cur)} months at current spending, ${coverage(bal,adj)} months on the Adjusted budget">
+  // Finish line: a solid ink post with a checkered pennant; its label sits on the side away from "you".
+  const xt = X(mt), ft = 30;
+  const side = xt < 110 ? 'r' : xt > W - 110 ? 'l' : (X(mc) > xt ? 'l' : 'r');
+  const finish = mt ? `<line class="finishline" x1="${xt.toFixed(1)}" y1="${ft}" x2="${xt.toFixed(1)}" y2="${base}"/>
+      <rect x="${side==='l' ? (xt-15).toFixed(1) : xt.toFixed(1)}" y="${ft}" width="15" height="10" fill="url(#checker)" stroke="var(--text)" stroke-width="1"/>` : '';
+  const finishLabel = mt ? `<span class="finish ${side}" style="left:${(xt/W*100).toFixed(2)}%">Finish · ${ti.dollars!==null ? money(ti.dollars) : ti.months.toFixed(1)+' mo'}</span>` : '';
+  return `<div class="profile" role="img" aria-label="Coverage climb: ${coverage(bal,cur)} months at current spending, ${coverage(bal,adj)} months on the Adjusted budget${mt ? `, finish line at ${mt.toFixed(1)} months` : ''}">
     <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">
-      <defs><clipPath id="climbed"><path d="${fill}"/></clipPath></defs>
+      <defs><clipPath id="climbed"><path d="${fill}"/></clipPath>
+        <pattern id="checker" width="5" height="5" patternUnits="userSpaceOnUse"><rect width="5" height="5" fill="var(--surface)"/><rect width="2.5" height="2.5" fill="var(--text)"/><rect x="2.5" y="2.5" width="2.5" height="2.5" fill="var(--text)"/></pattern></defs>
       ${sky}
       <path d="${fill}" fill="var(--t${tier})"/>
       <g clip-path="url(#climbed)" fill="none" stroke="var(--topo)" stroke-opacity=".7" stroke-width="1">${rings}</g>
       ${TARGETS.map(([n])=>`<line class="campline" x1="${X(n).toFixed(1)}" y1="${E(n).toFixed(1)}" x2="${X(n).toFixed(1)}" y2="${base}"/>`).join('')}
       ${mc < xMax ? `<path class="ahead" d="${path(ahead)}"/>` : ''}
       <line class="ground" x1="0" y1="${base}" x2="${W}" y2="${base}"/>
+      ${finish}
       ${flags}
       ${adj > 0 ? `<circle cx="${X(ma).toFixed(1)}" cy="${E(ma).toFixed(1)}" r="6" fill="var(--surface)" stroke="var(--text)" stroke-width="2.5"/>` : ''}
       ${cur > 0 ? `<circle cx="${X(mc).toFixed(1)}" cy="${E(mc).toFixed(1)}" r="8" fill="var(--marker)" stroke="var(--surface)" stroke-width="3"/>` : ''}
     </svg>
     ${labels}
+    ${finishLabel}
     ${adj > 0 && !narrow ? pin(ma, ' alt', `Adjusted · ${coverage(bal,adj)} mo`, close ? 46 : 12) : ''}
     ${cur > 0 ? pin(mc, '', `You · ${coverage(bal,cur)} mo`, 12) : ''}
   </div>`;
@@ -742,6 +787,12 @@ function viewOverview(){
   const bal = Number(state.balance)||0;
   const tier = LEVELS.findIndex(l=>l[0]===ui.level) + 1;
   const cur = levelTotal('current', ui.level), adj = levelTotal('adjusted', ui.level);
+  const ti = targetInfo(bal, cur), tmode = state.target.mode, tv = state.target.value;
+  const curSym = money(0).replace(/[0-9.,\s-]/g,'') || '$';
+  const tval = tv === null ? '' : tmode==='dollars' ? grouped(tv) : String(tv);
+  const tother = !ti ? 'Your finish line on the climb'
+    : tmode==='dollars' ? (ti.months !== null ? `= ${ti.months.toFixed(1)} months at current spending` : 'Add monthly costs to place it')
+    : (ti.dollars !== null ? `= ${money(ti.dollars)} at current spending` : 'Add monthly costs to price it');
   const levelSeg = `<div class="seg levels" role="group" aria-label="Expenses counted">${LEVELS.map(([k,l])=>`<button class="${ui.level===k?'on':''}" data-level="${k}" aria-pressed="${ui.level===k}">${l}</button>`).join('')}</div>`;
   const camps = BUDGETS.map(([b,label])=>{
     const rows = LEVELS.map(([lv,lvLabel],li)=>{
@@ -758,16 +809,20 @@ function viewOverview(){
   return `
   <section class="summit">
     <div class="fig"><b${cur > 0 ? '' : ' class="empty"'}>${coverage(bal, cur)}</b><span>months covered</span></div>
-    <p class="cheer">${cheer(bal, cur)}</p>
+    <p class="cheer">${cheer(bal, cur, ti)}</p>
     ${levelSeg}
-    ${profile(bal, cur, adj, tier)}
+    ${profile(bal, cur, adj, tier, ti)}
     <div class="duo">
-      <div class="stat balcard"><div class="balmain"><label class="lbl" for="balanceBox">Dedicated balance</label>
+      <div class="stat balcard"><div class="balmain"><label class="lbl" for="balanceBox">Current savings balance</label>
         <div class="balrow"><button class="cur-sym" data-act="curmenu" aria-expanded="${curOpen}" aria-label="Currency: ${CURRENCIES.find(c=>c[0]===currencyCode())[2]}. Change currency">${CURRENCIES.find(c=>c[0]===currencyCode())[1]}</button>
         <input class="balance-input" id="balanceBox" type="text" inputmode="decimal" autocomplete="off" data-k="balance" data-act="balance" value="${grouped(bal)}"></div>
         <span class="muted small">Updated ${niceDate(state.balanceUpdated)}</span></div>
         <div class="curgrid${curOpen?' open':''}" role="group" aria-label="Currency">${CURRENCIES.map(([code,sym,name])=>
           `<button class="curbtn${code===currencyCode()?' on':''}" data-act="currency" data-code="${code}" title="${name} (${code})" aria-label="${name}" aria-pressed="${code===currencyCode()}">${sym}</button>`).join('')}</div></div>
+      <div class="stat tgt"><div class="lbl-row"><label class="lbl" for="targetBox">Target</label>
+          <span class="tseg" role="group" aria-label="Target unit">${[['dollars', curSym],['months','mo']].map(([m,l])=>`<button class="${tmode===m?'on':''}" data-act="tmode" data-mode="${m}" aria-pressed="${tmode===m}" aria-label="${m==='dollars'?'Target in money':'Target in months'}">${esc(l)}</button>`).join('')}</span></div>
+        <input class="target-input" id="targetBox" type="text" inputmode="decimal" autocomplete="off" data-k="target" data-act="target" placeholder="Set a goal" value="${tval}">
+        <span class="muted small">${tother}</span></div>
       <div class="stat"><span class="lbl"><i class="ring-key" aria-hidden="true"></i>Adjusted budget</span><b>${coverage(bal, adj)}<em>months</em></b><span class="muted small">${money(adj)}/month</span></div>
     </div>
   </section>
@@ -966,6 +1021,15 @@ document.addEventListener('click', e=>{
   if (d.year){ ui.year=d.year; saveUI(); render(); return; }
   const i = Number(d.i);
   switch(d.act){
+    case 'tmode': { const t = state.target, mo = levelTotal('current', ui.level);
+      if (d.mode === t.mode) break;
+      // Convert so the finish line stays where it is; without monthly costs there's nothing to convert by.
+      // Flipping straight back restores the exact number typed (no rounding drift).
+      const back = t.prev && t.prev.mode === d.mode && t.prev.conv === t.value;
+      const conv = back ? t.prev.value : t.value === null ? null
+        : mo > 0 ? (d.mode==='months' ? Math.round(t.value/mo*10)/10 : r2(t.value*mo)) : null;
+      t.prev = back ? null : {mode: t.mode, value: t.value, conv};
+      t.value = conv; t.mode = d.mode; commit(); break; }
     case 'incpage': ui.incCol = Math.max(0, Math.min(state.income.years.length-1, (ui.incCol||0) + Number(d.dir))); render(); break;
     case 'nudge': { const host=groupEl(el), from=Number(host.dataset.i);
       if (moveItem(host.dataset.group, from, from+Number(d.dir))) commit(); break; }
@@ -1039,6 +1103,7 @@ document.addEventListener('change', e=>{
   const P = () => state.paychecks[ui.year][i];
   switch(d.act){
     case 'balance': state.balance=parseAmount(v); state.balanceUpdated=today(); break;
+    case 'target': { const n = String(v).trim()==='' ? null : parseAmount(v); state.target.value = n > 0 ? n : null; break; }
     case 'bname': { const c=budgetCtx(el); c.list[c.i].name=v; break; }
     case 'bamt': { const c=budgetCtx(el); c.list[c.i].monthly=r2(v); break; }
     case 'pdate':
@@ -1159,6 +1224,9 @@ document.addEventListener('dragend', ()=>{
 // Balance box: plain number while editing, separators ("100,000.00") otherwise.
 document.addEventListener('focusin', e=>{ if (e.target.dataset.act==='balance'){ e.target.value = amt(state.balance); e.target.select(); } });
 document.addEventListener('focusout', e=>{ if (e.target.dataset.act==='balance') e.target.value = grouped(parseAmount(e.target.value)); });
+// The dollar target box works the same way; a months target is a plain number.
+document.addEventListener('focusin', e=>{ if (e.target.dataset.act==='target' && state.target.mode==='dollars'){ e.target.value = state.target.value===null ? '' : amt(state.target.value); e.target.select(); } });
+document.addEventListener('focusout', e=>{ if (e.target.dataset.act==='target' && state.target.mode==='dollars' && e.target.value.trim()!=='') e.target.value = grouped(parseAmount(e.target.value)); });
 document.addEventListener('input', e=>{
   if (e.target.dataset.act!=='notes') return;
   const wasOK = storageOK; state.notes=e.target.value; save();
