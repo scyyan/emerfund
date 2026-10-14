@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#161715" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#17402F" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F2A1E" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="E-Fund">
@@ -19,36 +19,54 @@ try { const th = JSON.parse(localStorage.getItem('emergencyFundDistro.v1.ui')||'
       if (th==='light' || th==='dark') document.documentElement.dataset.theme = th; } catch(e){}
 </script>
 <style>
-/* Light by default; dark follows the Mac setting unless the sun/moon button picked a theme. */
+/* Trailhead: the fund as a climb. Topographic-map palette: sage mist ground, forest shell,
+   a three-step terrain ramp (one green per expense level), hairline rules, and trail-marker
+   orange kept for "you are here" and anything that needs action. Night-map in dark mode. */
 :root{
   color-scheme:light;
-  --bg:#f6f5f1; --surface:#ffffff; --surface-2:#f0eee8; --text:#1d1d1b; --muted:#6b6a65; --line:#e3e0d8;
-  --accent:#2f6f5e; --accent-soft:#dcebe5; --warn:#b4542d; --warn-soft:#f6e3da; --proj:#77746c; --on-accent:#fff;
-  --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.05),0 2px 8px rgba(0,0,0,.04);
+  --bg:#EEF2EC; --surface:#ffffff; --surface-2:#E4EAE4; --text:#14231C; --muted:#56685E; --line:#CCD6CE;
+  --shell:#17402F; --shell-ink:#EAF2EC; --shell-dim:#B3C7BB; --contour:rgba(191,227,204,.22); --topo:#B98A62;
+  --accent:#2F7A55; --accent-soft:#DCEBE2; --t1:#A9D1B9; --t2:#5FA683; --t3:#2F7A55;
+  --marker:#C4410C; --on-marker:#fff; --warn:#A8481F; --warn-soft:#F8E2D6; --proj:#6D7F75; --on-accent:#fff;
 }
 /* Dark palette: it appears twice (automatic + manual toggle). Keep both copies identical. */
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --bg:#161715; --surface:#1f201e; --surface-2:#282926; --text:#ecebe6; --muted:#a19f97; --line:#34352f;
-    --accent:#6cc2a6; --accent-soft:#21362f; --warn:#e58a63; --warn-soft:#3a251c; --proj:#8f8d85; --on-accent:#10211b;
-    --shadow:none;
+    --bg:#0E1713; --surface:#15211B; --surface-2:#1D2B24; --text:#E4ECE6; --muted:#9DB0A5; --line:#2A3A31;
+    --shell:#0F2A1E; --shell-ink:#E4ECE6; --shell-dim:#9DB8A9; --contour:rgba(124,211,163,.14); --topo:#7A5E45;
+    --accent:#67C795; --accent-soft:#1D3A2C; --t1:#2B5440; --t2:#3B7D5A; --t3:#4C9E72;
+    --marker:#FF8A57; --on-marker:#1A0C05; --warn:#FF9466; --warn-soft:#3A2418; --proj:#8FA398; --on-accent:#0B1A12;
   }
 }
 :root[data-theme="dark"]{
     color-scheme:dark;
-    --bg:#161715; --surface:#1f201e; --surface-2:#282926; --text:#ecebe6; --muted:#a19f97; --line:#34352f;
-    --accent:#6cc2a6; --accent-soft:#21362f; --warn:#e58a63; --warn-soft:#3a251c; --proj:#8f8d85; --on-accent:#10211b;
-    --shadow:none;
+    --bg:#0E1713; --surface:#15211B; --surface-2:#1D2B24; --text:#E4ECE6; --muted:#9DB0A5; --line:#2A3A31;
+    --shell:#0F2A1E; --shell-ink:#E4ECE6; --shell-dim:#9DB8A9; --contour:rgba(124,211,163,.14); --topo:#7A5E45;
+    --accent:#67C795; --accent-soft:#1D3A2C; --t1:#2B5440; --t2:#3B7D5A; --t3:#4C9E72;
+    --marker:#FF8A57; --on-marker:#1A0C05; --warn:#FF9466; --warn-soft:#3A2418; --proj:#8FA398; --on-accent:#0B1A12;
 }
-.headright{display:flex;gap:8px;align-items:flex-start}
-.theme-btn{flex:none;width:38px;height:38px;display:grid;place-items:center;border:0;border-radius:10px;background:var(--surface-2);color:var(--text);cursor:pointer}
-.theme-btn:hover{color:var(--accent)}
+*{box-sizing:border-box}
+::selection{background:var(--accent-soft);color:var(--text)}
+input,textarea{caret-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus:not(:focus-visible){outline:none}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;font-feature-settings:"ss01"}
+.num,.fig b,.stat b,td.num{font-variant-numeric:tabular-nums}
+
+/* ---------- shell: forest header with contour lines; tabs inside it on desktop, at the bottom on phones ---------- */
+.shell{background:var(--shell);color:var(--shell-ink);position:relative;overflow:hidden}
+.shell .contours{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;fill:none;stroke:var(--contour);stroke-width:1}
+.shell-in{position:relative;max-width:1080px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700;letter-spacing:-.01em;margin:0;flex:1}
+.brand svg{width:26px;height:26px;flex:none}
+.headright{display:flex;gap:10px;align-items:center}
+.theme-btn{flex:none;width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:18px;background:rgba(255,255,255,.1);color:var(--shell-ink);cursor:pointer}
+.theme-btn:hover{background:rgba(255,255,255,.18)}
 .theme-btn svg{width:18px;height:18px}
-.themecol{display:flex;flex-direction:column;gap:6px}
-/* Desktop (mouse or trackpad): put "?" to the left of the sun/moon instead of below it */
-@media (hover:hover) and (pointer:fine){ .themecol{flex-direction:row-reverse} }
-.help-btn{font:inherit;font-size:18px;font-weight:700}
+/* "?" sits to the left of the sun/moon in the header */
+.themecol{display:flex;flex-direction:row-reverse;gap:8px}
+.help-btn svg{width:19px;height:19px}
 #help{width:calc(100% - 32px);max-width:560px;max-height:85vh;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 10px 40px rgba(0,0,0,.25)}
 #help::backdrop{background:rgba(0,0,0,.45)}
 #help .helphead{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--line)}
@@ -57,104 +75,193 @@ try { const th = JSON.parse(localStorage.getItem('emergencyFundDistro.v1.ui')||'
 #help h3{margin:18px 0 6px}
 #help p,#help li{font-size:14px;line-height:1.5}
 #help ul,#help ol{padding-left:20px;margin:6px 0}
-.chart-months{position:relative;height:16px;font-size:11px;color:var(--muted);margin-top:2px}
-.chart-months span{position:absolute;top:0;white-space:nowrap}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 60px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-h1{font-size:22px;margin:0;letter-spacing:-.01em}
-h2{font-size:17px;margin:0 0 12px}
-h3{font-size:14px;margin:0 0 8px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-nav{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px;flex-wrap:wrap}
-nav button{border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:7px;font:inherit;font-weight:500;cursor:pointer}
-nav button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
-.grid{display:grid;gap:14px}
-.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
-.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
-.cov{grid-template-columns:repeat(3,minmax(0,1fr))}
-@media (max-width:860px){ .cov{grid-template-columns:1fr} }
+nav{display:flex;gap:2px}
+nav button{display:flex;align-items:center;gap:7px;border:0;background:transparent;color:var(--shell-dim);padding:8px 12px;border-radius:10px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+nav button svg{width:18px;height:18px}
+nav button:hover{color:var(--shell-ink);background:rgba(255,255,255,.07)}
+nav button.on{color:var(--shell);background:var(--shell-ink)}
+nav button:focus-visible{outline-color:var(--shell-ink)}
+.shell .headright{order:3}
+.t-short{display:none}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 64px}
+
+/* ---------- type ---------- */
+h1{margin:0}
+h2{font-size:20px;font-weight:750;letter-spacing:-.015em;margin:0 0 12px}
+h3{font-size:14px;font-weight:650;margin:0 0 8px;color:var(--text)}
+.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted)}
 .muted{color:var(--muted)}
 .small{font-size:13px}
-.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
-.hero{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-bottom:14px}
-.big{font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
-.big small{font-size:18px;font-weight:500;color:var(--muted)}
-.balance-input{font-size:28px;font-weight:700;width:100%;max-width:240px}
-/* Balance box: amount on the left, currency picker on the right ($ alone on top, then 2 x 2) */
+.num{text-align:right;white-space:nowrap}
+
+/* ---------- panels and layout ---------- */
+.card{border-top:1px solid var(--text);padding:16px 0 4px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr));column-gap:48px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.section-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:36px 0 14px}
+.section-head h2{margin:0}
+.section-head p{margin:0;flex-basis:100%}
+
+/* ---------- overview: the climb ---------- */
+.summit{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.fig{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.fig b{font-size:clamp(72px,11vw,96px);line-height:.88;font-weight:800;letter-spacing:-.04em}
+.fig span{font-size:22px;font-weight:650;color:var(--accent);letter-spacing:-.01em}
+.cheer{margin:10px 0 0;font-size:16px;color:var(--muted);max-width:56ch}
+.cheer strong{color:var(--text)}
+.profile{position:relative;margin:18px 0 0}
+.profile svg{display:block;width:100%;height:auto;overflow:visible}
+.profile .contourline{fill:none;stroke:var(--topo);stroke-opacity:.55;stroke-width:1}
+.profile .campline{stroke:var(--topo);stroke-width:1;stroke-dasharray:2 4}
+.profile .ahead{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 5;vector-effect:non-scaling-stroke}
+.profile .ground{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
+.camp-label{position:absolute;transform:translateX(-50%);font-size:12px;font-weight:650;color:var(--muted);white-space:nowrap;bottom:0}
+.camp-label.reached{color:var(--text)}
+.pin{position:absolute;transform:translate(-50%,-100%);margin-top:-14px;background:var(--marker);color:var(--on-marker);font-size:12px;font-weight:750;padding:5px 10px;border-radius:99px;white-space:nowrap}
+.pin.alt{background:var(--surface);color:var(--text);border:1.5px solid var(--text)}
+.ring-key{display:inline-block;width:11px;height:11px;border-radius:50%;border:2.5px solid var(--text);margin-right:6px;vertical-align:-1px}
+.pin.edge-r{transform:translate(-100%,-100%)}
+.pin.edge-l{transform:translate(0,-100%)}
+.duo{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:6px}
+.duo>div{padding:16px 0}
+.duo>div+div{border-left:1px solid var(--line);padding-left:20px}
+.stat b{display:block;font-size:28px;font-weight:780;letter-spacing:-.025em;margin-top:2px}
+.stat b em{font-style:normal;font-size:15px;font-weight:650;color:var(--accent);margin-left:4px;letter-spacing:0}
+.balance-input{font-size:28px;font-weight:780;letter-spacing:-.025em;width:100%;max-width:260px;padding:2px 8px;margin:2px 0 2px -9px;text-align:left;font-variant-numeric:tabular-nums}
+/* Balance: amount on the left, currency picker on the right ($ alone on top, then 2 x 2) */
 .balcard{display:flex;gap:14px;align-items:flex-start}
 .balmain{flex:1;min-width:0}
-.balrow{display:flex;align-items:center;gap:6px}
-.balrow .balance-input{flex:1;min-width:0}
-.cur-sym{font-size:24px;font-weight:700;color:var(--muted)}
-.curgrid{flex:none;display:grid;grid-template-columns:repeat(2,38px);gap:6px}
-.curbtn{width:38px;height:38px;display:grid;place-items:center;border:0;border-radius:10px;background:var(--surface-2);color:var(--text);font:inherit;font-size:16px;font-weight:700;cursor:pointer}
-.curbtn:hover{color:var(--accent)}
-.curbtn.on{background:var(--accent);color:var(--on-accent)}
+.balrow{display:flex;align-items:center;gap:4px}
+.balrow .balance-input{flex:1;min-width:0;margin-left:0}
+.cur-sym{font:inherit;font-size:24px;font-weight:700;color:var(--muted);background:none;border:0;padding:0 2px;cursor:default}
+.curgrid{flex:none;display:grid;grid-template-columns:repeat(2,36px);gap:6px;padding-right:16px}
+.curbtn{width:36px;height:36px;display:grid;place-items:center;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--text);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.curbtn:hover{border-color:var(--accent);color:var(--accent)}
+.curbtn.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .curbtn:first-child{grid-column:1 / -1;justify-self:center} /* US Dollar alone on the top row */
-input,textarea,select{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:5px 8px}
-input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
-input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
-.seg{display:inline-flex;background:var(--surface-2);border-radius:8px;padding:3px;gap:2px;flex-wrap:wrap}
-.seg button{border:0;background:transparent;color:var(--muted);padding:5px 10px;border-radius:6px;font:inherit;font-size:13px;cursor:pointer}
-.seg button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
-.bar{height:8px;background:var(--surface-2);border-radius:5px;overflow:hidden}
-.bar>i{display:block;height:100%;background:var(--accent);border-radius:5px}
-.bar.short>i{background:var(--warn)}
-.target{display:grid;grid-template-columns:62px 1fr auto;gap:10px;align-items:center;margin:8px 0;font-size:13px}
+/* Phones: the symbol opens a compact menu, so Balance and Adjusted stay side by side */
+@media (max-width:700px){
+  .balcard{position:relative;display:block}
+  .cur-sym{cursor:pointer;color:var(--accent);font-size:20px;border-bottom:1.5px dashed var(--accent);line-height:1.1}
+  .curgrid{display:none}
+  .curgrid.open{display:grid;grid-template-columns:repeat(5,36px);position:absolute;left:0;top:100%;z-index:5;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px -10px rgba(0,0,0,.3)}
+  .curgrid.open .curbtn:first-child{grid-column:auto}
+}
+.levels{margin-top:16px;justify-self:start}
+.seg button{white-space:nowrap}
+.fig b.empty{font-weight:300;color:var(--muted)}
+
+/* camps: every budget x level combination, one ramp colour per level */
+.camps{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px 48px}
+.camps h3{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.camps h3 span{font-size:13px;font-weight:600;color:var(--muted)}
+.lvl{padding:14px 0;border-top:1px solid var(--line)}
+.lvl:first-of-type{border-top:0}
+.lvl-head{display:flex;align-items:center;gap:10px}
+.swatch{width:12px;height:12px;border-radius:4px;flex:none}
+.lvl-head .name{flex:1;font-weight:600}
+.lvl-head .mo{font-weight:780;font-size:18px;letter-spacing:-.02em}
+.lvl-head .mo small{font-size:13px;color:var(--muted);font-weight:600;margin-left:2px}
+.trail{position:relative;height:8px;border-radius:4px;background:var(--surface-2);margin:10px 0 8px;overflow:visible}
+.trail i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+.trail b{position:absolute;top:-3px;width:2px;height:14px;background:var(--surface);border-radius:1px}
+.trail b.beyond{background:var(--marker)}
+.targets{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted)}
+.targets span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.targets .ok{color:var(--accent)}
+.targets .bad{color:var(--warn)}
 .ok{color:var(--accent);font-weight:600}
 .bad{color:var(--warn);font-weight:600}
-table{width:100%;border-collapse:collapse}
-th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
-th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-tr.total td{font-weight:700;border-bottom:0;border-top:2px solid var(--line)}
-td input[type=text]{width:100%;min-width:90px}
-td input[type=number]{width:110px}
-.icon{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:4px 6px;border-radius:6px;font-size:14px}
+
+/* ---------- controls ---------- */
+input,textarea,select{font:inherit;color:var(--text);background:transparent;border:1px solid transparent;border-radius:8px;padding:6px 8px;transition:border-color .15s,background-color .15s}
+input:hover,textarea:hover{border-color:var(--line);background:var(--surface)}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent;background:var(--surface)}
+input[type=number]{text-align:right;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=date]{font-variant-numeric:tabular-nums}
+input[type=date]::-webkit-calendar-picker-indicator{opacity:.35;cursor:pointer}
+input[type=date]:hover::-webkit-calendar-picker-indicator,input[type=date]:focus::-webkit-calendar-picker-indicator{opacity:.9}
+input[data-act=pnote]::placeholder{color:transparent}
+tr:hover input[data-act=pnote]::placeholder,input[data-act=pnote]:focus::placeholder{color:var(--muted)}
+.sign .ic{width:14px;height:14px;margin:auto}
+.pager{display:none;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 4px}
+.pager .yearlabel{width:72px;text-align:center;font-size:16px}
+.hint{margin-left:6px}
+textarea{width:100%;min-height:140px;resize:vertical;border-color:var(--line);background:var(--surface)}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:12px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:9px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.seg button:hover{color:var(--text)}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(20,35,28,.12)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:9px 16px;border-radius:12px;font:inherit;font-weight:650;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--shell);border-color:var(--shell);color:var(--shell-ink)}
+.btn.primary:hover{filter:brightness(1.15);color:var(--shell-ink)}
+.btn.danger{color:var(--warn)}
+.btn.danger:hover{border-color:var(--warn);color:var(--warn)}
+.btn.small{padding:6px 12px;font-size:13px;border-radius:10px}
+.addrow{margin-top:10px}
+.link{border:0;background:none;color:var(--accent);padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font:inherit}
+.ic{width:16px;height:16px;display:block;flex:none}
+.ok .ic,.bad .ic{display:inline-block;vertical-align:-3px;width:15px;height:15px}
+.inl{white-space:nowrap}
+.inl .ic{display:inline-block;vertical-align:-3px;width:14px;height:14px}
+.icon{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:6px;border-radius:8px;display:inline-grid;place-items:center;vertical-align:middle}
 .icon:hover{background:var(--surface-2);color:var(--text)}
-.grip{cursor:grab;color:var(--muted);padding:4px 2px;-webkit-user-select:none;user-select:none;font-size:14px;letter-spacing:-2px;opacity:.6}
+.grip{cursor:grab;color:var(--muted);padding:3px 0;-webkit-user-select:none;user-select:none;opacity:.55;display:inline-flex}
 .grip:hover{opacity:1;color:var(--text)}
 .grip:focus-visible{opacity:1;color:var(--text);outline:2px solid var(--accent);outline-offset:1px;border-radius:4px}
+.nudges{display:none;flex-direction:column;gap:2px}
+.touch-only{display:none}
+.nudges.x{flex-direction:row}
+.nudge{padding:1px 4px}
+.nudge .ic{width:14px;height:14px}
+.nudge:disabled{opacity:.25;cursor:default}
+
+/* ---------- tables: dense, hairline-ruled ---------- */
+table{width:100%;border-collapse:collapse}
+th,td{padding:2px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle;height:38px}
+th.inp{padding-right:15px}
+td input{padding-top:4px;padding-bottom:4px}
+th{font-size:12px;color:var(--muted);font-weight:650}
+tr.total td{font-weight:750;border-bottom:0;border-top:1px solid var(--text);padding-top:10px}
+td input[type=text]{width:100%;min-width:90px}
+td input[type=number]{width:112px}
 td.gripcell{width:22px;padding-right:0}
+.tier{display:flex;align-items:center;gap:8px;margin:22px 0 4px}
+.tier:first-of-type{margin-top:12px}
+.tier h3{margin:0}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.panel-head h2{margin:0}
 tr.dragging{opacity:.35}
 tr.drop-before td{box-shadow:inset 0 2px 0 var(--accent)}
 tr.drop-after td{box-shadow:inset 0 -2px 0 var(--accent)}
 [data-axis=x].dragging{opacity:.35}
 [data-axis=x].drop-before{box-shadow:inset 2px 0 0 var(--accent)}
 [data-axis=x].drop-after{box-shadow:inset -2px 0 0 var(--accent)}
-.yearlabel{width:64px;text-align:right;font-weight:600;padding:4px 6px}
-.sign{border:0;width:24px;height:24px;flex:none;border-radius:6px;font:inherit;font-weight:700;cursor:pointer;line-height:1}
+.yearlabel{width:64px;text-align:right;font-weight:700;padding:4px 6px}
+.sign{border:0;width:26px;height:26px;flex:none;border-radius:8px;cursor:pointer;display:grid;place-items:center;padding:0}
 .sign.minus{background:var(--warn-soft);color:var(--warn)}
 .sign.plus{background:var(--accent-soft);color:var(--accent)}
-.link{border:0;background:none;color:var(--accent);padding:0;cursor:pointer;text-decoration:underline;font:inherit}
-.btn.small{padding:4px 10px;font-size:13px}
-.nudges{display:none;flex-direction:column;gap:2px}
-.touch-only{display:none}
-.nudges.x{flex-direction:row}
-.nudge{padding:0 6px;font-size:11px;line-height:1.5}
-.nudge:disabled{opacity:.25;cursor:default}
-@media (pointer:coarse){
-  .grip,.mouse-only{display:none}
-  .nudges{display:inline-flex}
-  .touch-only{display:inline}
-  input,select,textarea{font-size:16px}
-  .icon{padding:8px 9px}
-  .nudge{padding:3px 8px}
-}
-.btn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:7px 14px;border-radius:8px;font:inherit;font-weight:500;cursor:pointer}
-.btn:hover{background:var(--surface-2)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.btn.danger{color:var(--warn)}
-.addrow{margin-top:8px}
-.pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
-.pill.got{background:var(--accent-soft);color:var(--accent)}
-.pill.need{background:var(--warn-soft);color:var(--warn)}
+
+/* ---------- paychecks: state marks stamp each row ---------- */
+.mark{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:3px 9px 3px 7px;border-radius:99px;white-space:nowrap;border:1.5px solid transparent}
+.mark .ic{width:13px;height:13px}
+.mark.got{background:var(--accent-soft);color:var(--accent)}
+.mark.proj{border-style:dashed;border-color:var(--proj);color:var(--proj)}
+.mark.need{background:var(--marker);color:var(--on-marker)}
 tr.future td{color:var(--proj)}
 tr.future input{color:var(--proj)}
-.stat{display:flex;flex-direction:column;gap:2px}
-.stat b{font-size:22px;letter-spacing:-.01em}
-.banner{background:var(--warn-soft);color:var(--warn);padding:10px 14px;border-radius:10px;margin-bottom:14px;font-weight:500}
+.strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:20px}
+.strip>div{padding:14px 0}
+.strip>div+div{border-left:1px solid var(--line);padding-left:20px}
+.chart-months{position:relative;height:16px;font-size:11px;color:var(--muted);margin-top:4px}
+.chart-months span{position:absolute;top:0;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.banner{background:var(--warn-soft);color:var(--warn);padding:12px 16px;border-radius:12px;margin-bottom:16px;font-weight:600}
 .scroll{overflow-x:auto}
 /* Sideways-scrolling tables get a visible bar above and below (phones hide their own scroll
    bars until you're already scrolling). The bars only appear when the table is wider than the box. */
@@ -162,30 +269,84 @@ tr.future input{color:var(--proj)}
 .xscroll::-webkit-scrollbar{display:none}
 .xbar{display:none;position:relative;height:16px;cursor:pointer;touch-action:none}
 .xbar::before{content:'';position:absolute;left:0;right:0;top:5px;height:6px;border-radius:3px;background:var(--surface-2)}
-.xbar i{position:absolute;top:5px;height:6px;border-radius:3px;background:var(--muted);opacity:.75}
+.xbar i{position:absolute;top:5px;height:6px;border-radius:3px;background:var(--proj)}
 .xwrap.overflow .xbar{display:block}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.spacer{flex:1}
-textarea{width:100%;min-height:120px;resize:vertical}
-.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:6px}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-@media (max-width:600px){ .big{font-size:32px} td input[type=number]{width:80px} .card{padding:14px} th,td{padding:6px 3px} td input[type=text]{min-width:70px} }
+hr{border:0;border-top:1px solid var(--line);margin:20px 0}
+
+/* ---------- touch screens ---------- */
+@media (pointer:coarse){
+  .grip,.mouse-only{display:none}
+  .nudges{display:inline-flex}
+  .touch-only{display:inline}
+  input,select,textarea{font-size:16px}
+  input[type=number],input[type=date],textarea{background:var(--surface-2)}
+  td input[type=text]{border-bottom:1px dashed var(--line);border-radius:0}
+  .balance-input{font-size:28px}
+  .icon{padding:7px}
+  .nudge{padding:2px 4px;color:var(--text)}
+  .nudge .ic{width:17px;height:17px}
+}
+
+/* ---------- phones: bottom tab bar, one job per screen ---------- */
+@media (max-width:700px){
+  .shell-in{padding:14px 16px}
+  nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));justify-content:space-around}
+  nav button{flex-direction:column;gap:3px;font-size:11px;padding:6px 4px;flex:1;color:var(--muted);border-radius:10px;min-width:0}
+  nav button svg{width:22px;height:22px}
+  .t-long{display:none} .t-short{display:inline}
+  nav button.on{background:transparent;color:var(--accent)}
+  nav button:hover{background:transparent;color:var(--text)}
+  .wrap{padding:20px 16px calc(96px + env(safe-area-inset-bottom))}
+  .card{padding:14px 0 4px}
+  .fig b{font-size:84px}
+  .fig span{font-size:20px}
+  .cheer{font-size:15px}
+  .duo>div+div,.strip>div+div{padding-left:14px}
+  .stat b{font-size:22px}
+  .balance-input{font-size:22px}
+  .strip{grid-template-columns:1fr 1fr}
+  .strip>div:first-child{grid-column:1/-1;border-bottom:1px solid var(--line)}
+  .strip>div:nth-child(2){border-left:0;padding-left:0}
+  .seg{display:flex}
+  .seg button{flex:1 1 auto;padding:8px 10px;font-size:13px}
+  .levels{display:flex}
+  td input[type=number]{width:84px} th,td{padding:6px 3px;height:auto} td input[type=text]{min-width:64px}
+  .pager{display:flex}
+  .balance-input{font-size:20px}
+  /* Income snapshot: room for line names and full amounts (it scrolls sideways) */
+  .inc td:first-child{min-width:176px}
+  .inc.one td:first-child{min-width:0}
+  .inc.one .hint{display:block;margin:8px 0 2px}
+  .inc .row input[type=text]{flex:1 1 0;min-width:0;width:0}
+  .inc.one{table-layout:fixed}
+  .inc.one td:nth-child(2){width:112px}
+  .inc.one td:last-child{width:38px}
+  .inc.one td input[type=number]{width:100px}
+  .inc td input[type=number]{width:104px}
+  .section-head{margin-top:28px}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>Emergency Fund</h1>
+<header class="shell">
+  <svg class="contours" viewBox="0 0 1200 80" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M-20 70C120 40 260 92 420 58S700 18 860 44S1100 70 1220 30"/><path d="M-20 52C110 24 250 76 410 40S690 2 850 26S1090 52 1220 12"/>
+    <path d="M-20 88C140 58 280 108 440 76S720 36 880 62S1110 88 1220 50"/><path d="M-20 34C100 8 240 58 400 22S680 -14 840 8S1080 34 1220 -6"/>
+  </svg>
+  <div class="shell-in">
+    <h1 class="brand"><svg viewBox="0 0 26 26" aria-hidden="true"><path d="M2 22l7.5-11 4.5 6 3.5-4.5L24 22z" fill="currentColor" opacity=".9"/><path d="M17.5 12.5V4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M17.5 4.5l5 1.8-5 1.8z" fill="var(--marker)"/></svg>Emergency Fund</h1>
+    <nav id="tabs" aria-label="Sections"></nav>
     <div class="headright">
-      <div class="themecol"><button id="themeBtn" class="theme-btn" data-act="theme"></button><button id="helpBtn" class="theme-btn help-btn" title="How to use this app" aria-label="How to use this app" aria-haspopup="dialog">?</button></div>
-      <nav id="tabs" aria-label="Sections"></nav>
+      <div class="themecol"><button id="themeBtn" class="theme-btn" data-act="theme"></button><button id="helpBtn" class="theme-btn help-btn" title="How to use this app" aria-label="How to use this app" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.2 9.2a2.9 2.9 0 1 1 4.3 2.5c-.9.5-1.5 1.2-1.5 2.2v.6"/><path d="M12 18h.01"/></svg></button></div>
     </div>
-  </header>
+  </div>
+</header>
+<div class="wrap">
   <div id="banner"></div>
   <main id="app"></main>
 <dialog id="help" aria-labelledby="helpTitle">
   <div class="helphead"><h2 id="helpTitle">How to use E-Fund</h2>
-    <form method="dialog"><button class="icon" aria-label="Close help" style="font-size:18px">✕</button></form></div>
+    <form method="dialog"><button class="icon" aria-label="Close help"><svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button></form></div>
   <div class="helpbody">
     <p>A simple, private app for tracking your emergency fund: how many months your savings would cover, your monthly budget, your paychecks, and a yearly income snapshot.</p>
 
@@ -199,7 +360,7 @@ textarea{width:100%;min-height:120px;resize:vertical}
     <h3>Getting started</h3>
     <ul>
       <li><b>Overview:</b> type your emergency fund balance at the top, and pick your currency with the buttons beside it.</li>
-      <li><b>Budget:</b> set your monthly costs. "Current" is what you spend now; "Adjusted" is a leaner version for a real emergency. Rename, add (+ Add line) or delete (✕) lines as you like.</li>
+      <li><b>Budget:</b> set your monthly costs. "Current" is what you spend now; "Adjusted" is a leaner version for a real emergency. Rename, add (+ Add line) or delete (the X button) lines as you like.</li>
       <li><b>Paychecks:</b> tap "+ Add paycheck" to log your take-home pay.</li>
       <li><b>Income:</b> tap "+ Add year" to start the yearly snapshot.</li>
     </ul>
@@ -221,8 +382,8 @@ textarea{width:100%;min-height:120px;resize:vertical}
 
     <h3>Tips</h3>
     <ul>
-      <li>Reorder lines with <b>▲▼</b> on a phone, or drag <b>⋮⋮</b> on a computer. Moving a line in one budget also moves the same line in the other.</li>
-      <li><b>⇄</b> copies a line into the other budget.</li>
+      <li>Reorder lines with the up/down arrow buttons on a phone, or drag the dotted handle on a computer. Moving a line in one budget also moves the same line in the other.</li>
+      <li>The two-arrow button copies a line into the other budget.</li>
       <li>The currency buttons only change the symbol shown; they don't convert amounts between currencies.</li>
       <li>The sun/moon button switches between light and dark mode.</li>
       <li>On the Income tab, a year named like a Paychecks year (e.g. "2026") pulls its net pay from the Paychecks tab automatically. You can type over it.</li>
@@ -244,6 +405,7 @@ const TARGETS = [[3,'3 months'],[6,'6 months'],[9,'9 months'],[12,'1 year']];
 const CURRENCIES = [['USD','$','US Dollar'],['EUR','€','Euro'],['JPY','¥','Japanese Yen'],
                     ['GBP','£','Pound Sterling'],['CNY','元','Chinese Yuan']];
 const fmtCache = {};
+let curOpen = false; // phone currency menu
 function currencyCode(){ return CURRENCIES.some(c=>c[0]===state.currency) ? state.currency : 'USD'; }
 const money = n => (fmtCache[currencyCode()] ||= new Intl.NumberFormat('en-US',{style:'currency',currency:currencyCode()})).format(n||0);
 // Shift the decimal point as text instead of multiplying, so 1.005 becomes 101 cents
@@ -256,6 +418,22 @@ const cents = n => {
 const sum = arr => arr.reduce((a,n)=>a+cents(n),0)/100;
 const r2 = n => cents(n)/100;
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Amount for a number box: always two decimals ("2000.00" next to "49.99"), blank when unset.
+const amt = n => (n===null || n===undefined || n==='') ? '' : (Number(n)||0).toFixed(2);
+// The balance box shows thousands separators ("100,000.00") until you start editing it.
+const grouped = n => (Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const parseAmount = s => r2(String(s).replace(/[^0-9.\-]/g,''));
+// Small drawn icon set (one stroke weight) used in place of text symbols.
+const ICONS = {
+  x:'<path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/>',
+  check:'<path d="M4.5 10.5l3.5 3.5 7.5-8"/>',
+  swap:'<path d="M4 7.5h11.5l-3-3M16 12.5H4.5l3 3"/>',
+  up:'<path d="M5.5 12.5l4.5-4.5 4.5 4.5"/>', down:'<path d="M5.5 8l4.5 4.5L14.5 8"/>',
+  left:'<path d="M12 5.5L7.5 10l4.5 4.5"/>', right:'<path d="M8 5.5l4.5 4.5L8 14.5"/>',
+  minus:'<path d="M5 10h10"/>', plus:'<path d="M10 5v10M5 10h10"/>',
+  grip:'<g fill="currentColor" stroke="none"><circle cx="7.5" cy="5" r="1.4"/><circle cx="12.5" cy="5" r="1.4"/><circle cx="7.5" cy="10" r="1.4"/><circle cx="12.5" cy="10" r="1.4"/><circle cx="7.5" cy="15" r="1.4"/><circle cx="12.5" cy="15" r="1.4"/></g>',
+};
+const ic = (name, label) => `<svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'}>${ICONS[name]}</svg>`;
 // Local calendar date as YYYY-MM-DD (toISOString() would convert to UTC and can shift the day).
 const isoDate = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const today = () => isoDate(new Date());
@@ -391,7 +569,15 @@ function netPay(y){
 
 /* ---------- render ---------- */
 let flash = ''; // one-time message shown at the top on the next render
-const TABS = [['overview','Overview'],['budget','Budget'],['paychecks','Paychecks'],['income','Income'],['settings','Backup & Notes']];
+const TABS = [['overview','Overview'],['budget','Budget'],['paychecks','Paychecks'],['income','Income'],['settings','Backup & Notes','Backup']];
+const TAB_ICONS = {
+  overview:'<path d="M2.5 19.5l6.5-10 4.2 5.6 3-4 5.3 8.4z"/>',
+  budget:'<path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01"/>',
+  paychecks:'<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/>',
+  income:'<path d="M5 20v-8M12 20V5M19 20v-5M3 20h18"/>',
+  settings:'<rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13.5h4"/>',
+};
+const tabIcon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TAB_ICONS[k]}</svg>`;
 // An identity for a focusable element that survives a redraw: its data-k for text boxes,
 // its action + position for buttons, and its group + position for ⋮⋮ grips.
 function focusKey(el){
@@ -450,6 +636,11 @@ function setupHScroll(wrap){
   update();
 }
 window.addEventListener('resize', ()=>document.querySelectorAll('.xwrap').forEach(w=>w._update && w._update()));
+let lastW = window.innerWidth, resizeTimer;
+window.addEventListener('resize', ()=>{
+  if (!['overview','income'].includes(ui.tab) || window.innerWidth===lastW) return; // phone keyboards change height, not width
+  lastW = window.innerWidth; clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 120);
+});
 function render(){
   // Remember how far each sideways table was scrolled, so editing doesn't jump it back left.
   const scrolled = {};
@@ -458,7 +649,7 @@ function render(){
   skipRefocus = false;
   renderToday = today();
   renderThemeButton();
-  document.getElementById('tabs').innerHTML = TABS.map(([k,l])=>`<button class="${ui.tab===k?'on':''}" data-tab="${k}"${ui.tab===k?' aria-current="page"':''}>${l}</button>`).join('');
+  document.getElementById('tabs').innerHTML = TABS.map(([k,l,short])=>`<button class="${ui.tab===k?'on':''}" data-tab="${k}"${ui.tab===k?' aria-current="page"':''}>${tabIcon(k)}${short ? `<span class="t-long">${l}</span><span class="t-short">${short}</span>` : `<span>${l}</span>`}</button>`).join('');
   renderBanner();
   const views = {overview:viewOverview,budget:viewBudget,paychecks:viewPaychecks,income:viewIncome,settings:viewSettings};
   document.getElementById('app').innerHTML = views[ui.tab]();
@@ -477,66 +668,132 @@ function render(){
 function coverage(bal, monthly){ return monthly > 0 ? (bal/monthly).toFixed(1) : '—'; }
 // Move-up/down (or left/right) buttons used instead of dragging on touch screens.
 function nudges(i, count, horizontal=false){
-  const [back, fwd, bl, fl] = horizontal ? ['◀','▶','Move left','Move right'] : ['▲','▼','Move up','Move down'];
+  const [back, fwd, bl, fl] = horizontal ? [ic('left'),ic('right'),'Move left','Move right'] : [ic('up'),ic('down'),'Move up','Move down'];
   return `<span class="nudges${horizontal?' x':''}">`
     + `<button class="icon nudge" data-act="nudge" data-dir="-1" aria-label="${bl}"${i<=0?' disabled':''}>${back}</button>`
     + `<button class="icon nudge" data-act="nudge" data-dir="1" aria-label="${fl}"${i>=count-1?' disabled':''}>${fwd}</button></span>`;
 }
+// One encouraging line about where the climb stands, with the amount to the next camp.
+function cheer(bal, monthly){
+  if (!(monthly > 0)) return `<strong>Set your trail.</strong> Add your monthly costs on the Budget tab to see how far your fund reaches.`;
+  const m = bal / monthly, toGo = n => money(Math.max(0, r2(monthly*n - bal)));
+  if (m >= 12){
+    const extra = m - 12, mo = Math.floor(extra), wk = Math.floor(extra * 4.345);
+    const tail = mo >= 1 ? `, plus ${mo} more month${mo>1?'s':''}` : wk >= 1 ? `, plus ${wk} week${wk>1?'s':''}` : '';
+    return `<strong>Summit reached.</strong> A full year of expenses covered${tail}.`;
+  }
+  if (m >= 9) return `<strong>Past the 9-month camp.</strong> ${toGo(12)} more reaches the 1-year summit.`;
+  if (m >= 6) return `<strong>Halfway up.</strong> ${toGo(9)} more reaches the 9-month camp.`;
+  if (m >= 3) return `<strong>First camp reached.</strong> ${toGo(6)} more reaches 6 months.`;
+  if (m > 0) return `<strong>You're on the trail.</strong> ${toGo(3)} more reaches your first camp at 3 months.`;
+  return `<strong>Every climb starts here.</strong> Enter your dedicated balance below to see how far it reaches.`;
+}
+// The signature: coverage drawn as terrain climbed past camps at 3, 6, 9 and 12 months,
+// with "you are here" for current spending and a second marker for the Adjusted budget.
+function profile(bal, cur, adj, tier){
+  const wrapW = (document.querySelector('.wrap')||{}).clientWidth || 720;
+  const W = Math.max(300, Math.min(1040, wrapW - 40)), H = W < 560 ? 196 : 236;
+  const base = H - 30, top = 40;
+  const mc = cur > 0 ? Math.max(0, bal/cur) : 0, ma = adj > 0 ? Math.max(0, bal/adj) : 0;
+  const xMax = Math.max(12.8, Math.max(mc, ma) * 1.08);
+  const X = m => 6 + Math.min(m, xMax) / xMax * (W - 12);
+  // Elevation = accumulated slope, always positive (so higher always means more coverage), easing
+  // to a flat bench at each camp and varying between them like a real trail.
+  const N = 400, cum = [0];
+  for (let i = 1; i <= N; i++){ const m = xMax*i/N;
+    let s = 1 + 0.32*Math.sin(m*1.15 + 0.7);
+    for (const [c] of TARGETS) s -= 0.82*Math.exp(-((m-c)**2)/(2*0.28**2));
+    cum.push(cum[i-1] + Math.max(0.12, s)); }
+  const E = m => { const k = Math.min(m, xMax)/xMax*N, i = Math.floor(k), f = cum[Math.min(i,N)] + (cum[Math.min(i+1,N)] - cum[Math.min(i,N)])*(k-i);
+    return base - (base - top) * (0.04 + 0.9*f/cum[N]); };
+  const pts = []; for (let i = 0; i <= 140; i++){ const m = xMax*i/140; pts.push([X(m), E(m)]); }
+  const path = arr => arr.map((q,i)=>`${i?'L':'M'}${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join('');
+  const climbed = pts.filter(q=>q[0] < X(mc)).concat([[X(mc), E(mc)]]);
+  const ahead = [[X(mc), E(mc)]].concat(pts.filter(q=>q[0] > X(mc)));
+  const fill = `${path(climbed)}L${X(mc).toFixed(1)} ${base}L${X(0).toFixed(1)} ${base}Z`;
+  const rings = [16, 32, 48, 64].map(d=>`<path d="${path(pts.map(([x,y])=>[x, Math.min(base, y + d)]))}"/>`).join('');
+  const sky = [-20, -40, -60].map(d=>`<path class="contourline" d="${path(pts.map(([x,y])=>[x, Math.max(4, y + d)]))}"/>`).join('');
+  const flags = TARGETS.map(([n])=>{ const x = X(n), y = E(n), got = mc >= n;
+    return `<path d="M${x.toFixed(1)} ${y.toFixed(1)}v-22" stroke="var(--text)" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M${x.toFixed(1)} ${(y-22).toFixed(1)}l11 4.5-11 4.5z" fill="${got?'var(--text)':'var(--surface)'}" stroke="var(--text)" stroke-width="1.4" stroke-linejoin="round"/>`; }).join('');
+  const labels = TARGETS.map(([n,tl])=>`<span class="camp-label${mc>=n?' reached':''}" style="left:${(X(n)/W*100).toFixed(2)}%">${n===12?'1 yr':n+' mo'}</span>`).join('');
+  const pin = (m, cls, text, lift) => { const x = X(m), edge = x > W-90 ? ' edge-r' : x < 90 ? ' edge-l' : '';
+    return `<span class="pin${cls}${edge}" style="left:${(x/W*100).toFixed(2)}%;top:${((E(m)-lift)/H*100).toFixed(2)}%">${text}</span>`; };
+  const close = Math.abs(X(ma) - X(mc)) < 130, narrow = W < 560; // narrow: the ring alone, keyed by the stat below
+  return `<div class="profile" role="img" aria-label="Coverage climb: ${coverage(bal,cur)} months at current spending, ${coverage(bal,adj)} months on the Adjusted budget">
+    <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+      <defs><clipPath id="climbed"><path d="${fill}"/></clipPath></defs>
+      ${sky}
+      <path d="${fill}" fill="var(--t${tier})"/>
+      <g clip-path="url(#climbed)" fill="none" stroke="var(--topo)" stroke-opacity=".7" stroke-width="1">${rings}</g>
+      ${TARGETS.map(([n])=>`<line class="campline" x1="${X(n).toFixed(1)}" y1="${E(n).toFixed(1)}" x2="${X(n).toFixed(1)}" y2="${base}"/>`).join('')}
+      ${mc < xMax ? `<path class="ahead" d="${path(ahead)}"/>` : ''}
+      <line class="ground" x1="0" y1="${base}" x2="${W}" y2="${base}"/>
+      ${flags}
+      ${adj > 0 ? `<circle cx="${X(ma).toFixed(1)}" cy="${E(ma).toFixed(1)}" r="6" fill="var(--surface)" stroke="var(--text)" stroke-width="2.5"/>` : ''}
+      ${cur > 0 ? `<circle cx="${X(mc).toFixed(1)}" cy="${E(mc).toFixed(1)}" r="8" fill="var(--marker)" stroke="var(--surface)" stroke-width="3"/>` : ''}
+    </svg>
+    ${labels}
+    ${adj > 0 && !narrow ? pin(ma, ' alt', `Adjusted · ${coverage(bal,adj)} mo`, close ? 46 : 12) : ''}
+    ${cur > 0 ? pin(mc, '', `You · ${coverage(bal,cur)} mo`, 12) : ''}
+  </div>`;
+}
 function viewOverview(){
   const bal = Number(state.balance)||0;
-  const levelSeg = `<div class="seg">${LEVELS.map(([k,l])=>`<button class="${ui.level===k?'on':''}" data-level="${k}" aria-pressed="${ui.level===k}">${l}</button>`).join('')}</div>`;
-  const heroCards = BUDGETS.map(([b,label])=>{
-    const m = levelTotal(b,ui.level);
-    const months = coverage(bal, m);
-    return `<div class="card"><h3>${label} spending</h3>
-      <div class="big">${months} <small>months</small></div>
-      <div class="muted small">${money(m)}/month · ${LEVELS.find(l=>l[0]===ui.level)[1].toLowerCase()}</div></div>`;
-  }).join('');
-  const cards = BUDGETS.map(([b,label])=>`<div class="grid cov">${LEVELS.map(([lv,lvLabel])=>{
-    const m = levelTotal(b,lv); const months = coverage(bal, m);
-    const rows = TARGETS.map(([n,tl])=>{
-      const need = r2(m*n); const pct = need ? Math.max(0, Math.min(bal/need,1))*100 : 100; const short = bal < need;
-      return `<div class="target"><span>${tl}</span>
-        <div class="bar ${short?'short':''}" title="${money(need)} needed"><i style="width:${pct.toFixed(1)}%"></i></div>
-        <span class="num">${money(need)} ${short?`<span class="bad">✗</span><br><span class="bad small">${money(need-bal)} short</span>`:'<span class="ok">✓</span>'}</span></div>`;
+  const tier = LEVELS.findIndex(l=>l[0]===ui.level) + 1;
+  const cur = levelTotal('current', ui.level), adj = levelTotal('adjusted', ui.level);
+  const levelSeg = `<div class="seg levels" role="group" aria-label="Expenses counted">${LEVELS.map(([k,l])=>`<button class="${ui.level===k?'on':''}" data-level="${k}" aria-pressed="${ui.level===k}">${l}</button>`).join('')}</div>`;
+  const camps = BUDGETS.map(([b,label])=>{
+    const rows = LEVELS.map(([lv,lvLabel],li)=>{
+      const m = levelTotal(b,lv), months = coverage(bal, m), frac = m > 0 ? Math.max(0, Math.min(bal/m/12, 1)) : 0;
+      const targets = TARGETS.map(([n,tl])=>{ const need = r2(m*n);
+        return bal >= need ? `<span class="ok">${ic('check','covered')}${tl} · ${money(need)}</span>`
+                           : `<span class="bad">${ic('x','not covered')}${tl} · ${money(need-bal)} to go</span>`; }).join('');
+      return `<div class="lvl"><div class="lvl-head"><i class="swatch" style="background:var(--t${li+1})"></i><span class="name">${lvLabel}</span><span class="mo">${months}<small>mo</small></span></div>
+        <div class="trail" aria-hidden="true"><i style="width:${(frac*100).toFixed(1)}%;background:var(--t${li+1})"></i><b style="left:25%"></b><b style="left:50%"></b><b style="left:75%"></b></div>
+        <div class="targets">${targets}</div></div>`;
     }).join('');
-    return `<div class="card"><div class="row" style="flex-wrap:nowrap;align-items:baseline"><h3 style="margin:0;min-width:0">${label} · ${lvLabel}</h3><span class="spacer"></span><b style="white-space:nowrap">${months} mo</b></div>
-      <div class="muted small" style="margin:2px 0 6px">${money(m)}/month</div>${rows}</div>`;
-  }).join('')}</div>`).join('');
+    return `<div class="card"><h3>${b==='current'?'Current spending':'Adjusted budget'}<span>${money(levelTotal(b,'extras'))}/month all in</span></h3>${rows}</div>`;
+  }).join('');
   return `
-  <div class="hero">
-    <div class="card balcard"><div class="balmain"><h3>Dedicated balance</h3>
-      <div class="balrow"><span class="cur-sym" aria-hidden="true">${CURRENCIES.find(c=>c[0]===currencyCode())[1]}</span>
-      <input class="balance-input" type="number" step="0.01" data-k="balance" data-act="balance" value="${esc(bal)}" aria-label="Dedicated balance"></div>
-      <div class="muted small" style="margin-top:6px">Last updated ${niceDate(state.balanceUpdated)}</div></div>
-      <div class="curgrid" role="group" aria-label="Currency">${CURRENCIES.map(([code,sym,name])=>
-        `<button class="curbtn${code===currencyCode()?' on':''}" data-act="currency" data-code="${code}" title="${name} (${code})" aria-label="${name}" aria-pressed="${code===currencyCode()}">${sym}</button>`).join('')}</div></div>
-    ${heroCards}
-  </div>
-  <div class="row" style="margin:6px 0 12px"><h2 style="margin:0">Coverage targets</h2><span class="spacer"></span>${levelSeg}</div>
-  <p class="muted small" style="margin-top:-6px">The switch above changes the headline numbers. The cards below show every combination.</p>
-  <div class="grid">${cards}</div>`;
+  <section class="summit">
+    <div class="fig"><b${cur > 0 ? '' : ' class="empty"'}>${coverage(bal, cur)}</b><span>months covered</span></div>
+    <p class="cheer">${cheer(bal, cur)}</p>
+    ${levelSeg}
+    ${profile(bal, cur, adj, tier)}
+    <div class="duo">
+      <div class="stat balcard"><div class="balmain"><label class="lbl" for="balanceBox">Dedicated balance</label>
+        <div class="balrow"><button class="cur-sym" data-act="curmenu" aria-expanded="${curOpen}" aria-label="Currency: ${CURRENCIES.find(c=>c[0]===currencyCode())[2]}. Change currency">${CURRENCIES.find(c=>c[0]===currencyCode())[1]}</button>
+        <input class="balance-input" id="balanceBox" type="text" inputmode="decimal" autocomplete="off" data-k="balance" data-act="balance" value="${grouped(bal)}"></div>
+        <span class="muted small">Updated ${niceDate(state.balanceUpdated)}</span></div>
+        <div class="curgrid${curOpen?' open':''}" role="group" aria-label="Currency">${CURRENCIES.map(([code,sym,name])=>
+          `<button class="curbtn${code===currencyCode()?' on':''}" data-act="currency" data-code="${code}" title="${name} (${code})" aria-label="${name}" aria-pressed="${code===currencyCode()}">${sym}</button>`).join('')}</div></div>
+      <div class="stat"><span class="lbl"><i class="ring-key" aria-hidden="true"></i>Adjusted budget</span><b>${coverage(bal, adj)}<em>months</em></b><span class="muted small">${money(adj)}/month</span></div>
+    </div>
+  </section>
+  <div class="section-head"><h2>Camps</h2><p class="muted small">Every budget and expense level, measured against 3, 6, 9 and 12 months. The switch above sets the headline.</p></div>
+  <div class="camps">${camps}</div>`;
 }
 
 function viewBudget(){
   const cols = BUDGETS.map(([b,label])=>{
     const other = b==='current' ? 'Adjusted' : 'Current';
-    const sections = TIERS.map(([t,tl])=>{
+    const sections = TIERS.map(([t,tl],ti)=>{
       const items = state.budgets[b][t];
       const rows = items.map((it,i)=>`<tr data-group="b:${b}:${t}" data-i="${i}">
-        <td class="gripcell"><span class="grip" draggable="true" tabindex="0" role="button" title="Drag to reorder (or focus and use ↑ ↓)" aria-label="Reorder: use the up and down arrow keys">⋮⋮</span>${nudges(i, items.length)}</td>
+        <td class="gripcell"><span class="grip" draggable="true" tabindex="0" role="button" title="Drag to reorder (or focus and use ↑ ↓)" aria-label="Reorder: use the up and down arrow keys">${ic('grip')}</span>${nudges(i, items.length)}</td>
         <td><input type="text" data-k="${b}.${t}.${i}.name" data-act="bname" value="${esc(it.name)}" aria-label="${esc(it.name)} name"></td>
-        <td class="num"><input type="number" step="0.01" data-k="${b}.${t}.${i}.amt" data-act="bamt" value="${esc(it.monthly)}" aria-label="${esc(it.name)} monthly amount"></td>
-        <td class="num" style="width:64px"><button class="icon" title="Copy this line to the ${other} budget" aria-label="Copy ${esc(it.name)} to the ${other} budget" data-act="bcopy">⇄</button><button class="icon" title="Delete" aria-label="Delete ${esc(it.name)}" data-act="bdel">✕</button></td></tr>`).join('');
-      return `<h3 style="margin-top:18px">${tl}</h3>
+        <td class="num"><input type="number" step="0.01" data-k="${b}.${t}.${i}.amt" data-act="bamt" value="${amt(it.monthly)}" aria-label="${esc(it.name)} monthly amount"></td>
+        <td class="num" style="width:64px"><button class="icon" title="Copy this line to the ${other} budget" aria-label="Copy ${esc(it.name)} to the ${other} budget" data-act="bcopy">${ic('swap')}</button><button class="icon" title="Delete" aria-label="Delete ${esc(it.name)}" data-act="bdel">${ic('x')}</button></td></tr>`).join('');
+      return `<div class="tier"><i class="swatch" style="background:var(--t${ti+1})"></i><h3>${tl}</h3></div>
         <table><tbody>${rows}<tr class="total"><td></td><td>Subtotal</td><td class="num">${money(tierTotal(b,t))}</td><td></td></tr></tbody></table>
         <button class="btn addrow small" data-act="badd" data-addto="b:${b}:${t}">+ Add line</button>`;
     }).join('');
-    return `<div class="card"><div class="row"><h2 style="margin:0">${label}</h2><span class="spacer"></span><span class="muted small">per month</span></div>
+    return `<div class="card"><div class="panel-head"><h2>${label}</h2><span class="muted small">per month</span></div>
       ${sections}
       <table style="margin-top:18px"><tbody><tr class="total"><td>Total per month</td><td class="num">${money(levelTotal(b,'extras'))}</td></tr></tbody></table></div>`;
   }).join('');
-  return `<p class="muted small" style="margin-top:0">Changes save automatically. <span class="mouse-only">Drag ⋮⋮ (or click it and use the arrow keys)</span><span class="touch-only">Use ▲▼</span> to reorder a line within its section (the same line in the other budget moves too). ⇄ copies a line into the other budget.</p><div class="grid g2">${cols}</div>`;
+  return `<p class="muted small" style="margin-top:0">Changes save automatically. <span class="mouse-only">Drag <span class="inl">${ic('grip')}</span> (or click it and use the arrow keys)</span><span class="touch-only">Use <span class="inl">${ic('up')}${ic('down')}</span></span> to reorder a line within its section (the same line in the other budget moves too). <span class="inl">${ic('swap')}</span> copies a line into the other budget.</p><div class="grid g2">${cols}</div>`;
 }
 
 function chart(list){
@@ -545,15 +802,15 @@ function chart(list){
   const bw=(W-pad)/list.length;
   const bars=list.map((p,i)=>{
     const v=payExpected(p),h=Math.max(0,(v/max)*(H-pad-8)),s=payStatus(p);
-    const col = s==='received' ? 'var(--accent)' : s==='confirm' ? 'var(--warn)' : 'var(--proj)';
-    return `<rect x="${pad+i*bw+2}" y="${H-pad-h}" width="${Math.max(bw-4,2)}" height="${h}" rx="2" fill="${col}" opacity="${s==='projected'?.55:1}"><title>${niceDate(p.date)}: ${money(v)}</title></rect>`;
+    const col = s==='received' ? 'var(--accent)' : s==='confirm' ? 'var(--marker)' : 'var(--proj)';
+    return `<rect x="${pad+i*bw+2}" y="${H-pad-h}" width="${Math.max(bw-4,2)}" height="${h}" rx="3" fill="${col}" opacity="${s==='projected'?.35:1}"><title>${niceDate(p.date)}: ${money(v)}</title></rect>`;
   }).join('');
   const months=[...new Set(list.map(p=>p.date.slice(0,7)))];
   // Month labels are HTML (not SVG text) so they stay readable when the chart shrinks on a phone.
   const labels=months.map(m=>{const i=list.findIndex(p=>p.date.startsWith(m));return `<span style="left:${((pad+i*bw+2)/W*100).toFixed(2)}%">${new Date(m+'-15T12:00').toLocaleDateString('en-US',{month:'short'})}</span>`;}).join('');
   return `<svg viewBox="0 0 ${W} ${H-pad}" width="100%" role="img" aria-label="Bar chart of this year's paychecks">${bars}</svg>
     <div class="chart-months" aria-hidden="true">${labels}</div>
-    <div class="legend"><span><i style="background:var(--accent)"></i>Received</span><span><i style="background:var(--proj);opacity:.55"></i>Projected</span><span><i style="background:var(--warn)"></i>Needs confirming</span></div>`;
+    <div class="legend"><span><i style="background:var(--accent)"></i>Received</span><span><i style="background:var(--proj);opacity:.35"></i>Projected</span><span><i style="background:var(--marker)"></i>Needs confirming</span></div>`;
 }
 
 function viewPaychecks(){
@@ -564,27 +821,27 @@ function viewPaychecks(){
   const seg = `<div class="seg">${years.map(k=>`<button class="${k===y?'on':''}" data-year="${esc(k)}" aria-pressed="${k===y}">${esc(k)}</button>`).join('')}</div>`;
   const rows = list.map((p,i)=>{
     const s = payStatus(p);
-    const pill = s==='received' ? '<span class="pill got">Received</span>' : s==='confirm' ? '<span class="pill need">Confirm amount</span>' : '<span class="pill">Projected</span>';
+    const pill = s==='received' ? `<span class="mark got">${ic('check')}Received</span>` : s==='confirm' ? '<span class="mark need">Confirm amount</span>' : '<span class="mark proj">Projected</span>';
     const diff = s==='received' ? r2(p.actual - p.projected) : null;
     return `<tr class="${s==='projected'?'future':''}">
       <td><input type="date" data-k="p.${i}.date" data-act="pdate" data-i="${i}" value="${esc(p.date)}" aria-label="Pay date"></td>
       <td>${pill}</td>
-      <td class="num"><input type="number" step="0.01" placeholder="${s==='projected'?'—':'enter amount'}" data-k="p.${i}.actual" data-act="pactual" data-i="${i}" value="${esc(p.actual??'')}" aria-label="Actual amount for ${esc(niceDate(p.date))}"></td>
-      <td class="num"><input type="number" step="0.01" data-k="p.${i}.proj" data-act="pproj" data-i="${i}" value="${esc(p.projected??'')}" aria-label="Projected amount for ${esc(niceDate(p.date))}"></td>
+      <td class="num"><input type="number" step="0.01" placeholder="${s==='projected'?'—':'enter amount'}" data-k="p.${i}.actual" data-act="pactual" data-i="${i}" value="${amt(p.actual)}" aria-label="Actual amount for ${esc(niceDate(p.date))}"></td>
+      <td class="num"><input type="number" step="0.01" data-k="p.${i}.proj" data-act="pproj" data-i="${i}" value="${amt(p.projected)}" aria-label="Projected amount for ${esc(niceDate(p.date))}"></td>
       <td class="num ${diff>0?'ok':diff<0?'bad':''}">${diff===null?'':(diff>0?'+':'')+money(diff)}</td>
       <td><input type="text" data-k="p.${i}.note" data-act="pnote" data-i="${i}" value="${esc(p.note)}" placeholder="note" aria-label="Note for ${esc(niceDate(p.date))}"></td>
-      <td><button class="icon" title="Delete" aria-label="Delete the ${esc(niceDate(p.date))} paycheck" data-act="pdel" data-i="${i}">✕</button></td></tr>`;
+      <td><button class="icon" title="Delete" aria-label="Delete the ${esc(niceDate(p.date))} paycheck" data-act="pdel" data-i="${i}">${ic('x')}</button></td></tr>`;
   }).join('');
   return `
   <div class="row" style="margin-bottom:14px"><h2 style="margin:0">Paychecks</h2><span class="spacer"></span>${seg}</div>
-  <div class="grid g3" style="margin-bottom:14px">
-    <div class="card stat"><span class="muted small">Received so far (${t.receivedCount} of ${t.count})</span><b>${money(t.received)}</b></div>
-    <div class="card stat"><span class="muted small">Expected ${y} total</span><b>${money(t.expected)}</b><span class="muted small">received + projected</span></div>
-    <div class="card stat"><span class="muted small">Projected (precalc) total</span><b>${money(t.precalc)}</b></div>
+  <div class="strip">
+    <div class="stat"><span class="lbl">Received so far (${t.receivedCount} of ${t.count})</span><b>${money(t.received)}</b></div>
+    <div class="stat"><span class="lbl">Expected ${y} total</span><b>${money(t.expected)}</b><span class="muted small">received + projected</span></div>
+    <div class="stat"><span class="lbl">Projected (precalc) total</span><b>${money(t.precalc)}</b></div>
   </div>
   <div class="card" style="margin-bottom:14px">${chart(list)}</div>
   <div class="card">
-    ${hscroll('pay', `<table><thead><tr><th>Pay date</th><th>Status</th><th class="num">Actual</th><th class="num">Projected</th><th class="num">Diff</th><th>Note</th><th></th></tr></thead>
+    ${hscroll('pay', `<table><thead><tr><th>Pay date</th><th>Status</th><th class="num inp">Actual</th><th class="num inp">Projected</th><th class="num">Diff</th><th>Note</th><th></th></tr></thead>
     <tbody>${rows}</tbody></table>`)}
     <button class="btn addrow" data-act="padd">+ Add paycheck</button>
     <span class="muted small" style="margin-left:8px">Paychecks dated after today are treated as projected. Once the date passes, enter the actual amount.</span>
@@ -599,34 +856,42 @@ function viewIncome(){
     const disp = r2(disc + sum(lines.map(l=>(l.sign<0?-1:1)*(Number(l.amounts[y.id])||0))));
     return {y,yi,net,disc,disp};
   });
+  const narrow = window.innerWidth <= 480;
+  if (!(ui.incCol >= 0 && ui.incCol < cols.length)) ui.incCol = Math.max(0, cols.findIndex(c=>c.y.label===String(new Date().getFullYear())));
+  const all = cols, shownCols = narrow ? cols.slice(ui.incCol, ui.incCol + 1) : cols;
+  const pc = all[ui.incCol];
+  const pager = narrow && pc ? `<div class="pager"><button class="icon" data-act="incpage" data-dir="-1" aria-label="Previous year"${ui.incCol<=0?' disabled':''}>${ic('left')}</button>
+    <span class="row" style="gap:6px;flex-wrap:nowrap"><input type="text" class="yearlabel" data-k="ylabel.${esc(pc.y.id)}" data-act="ylabel" data-i="${pc.yi}" value="${esc(pc.y.label)}" aria-label="Year label"><span class="muted small">${ui.incCol+1} of ${all.length}</span>
+    <button class="icon" title="Delete this year" aria-label="Delete the ${esc(pc.y.label)} year" data-act="ydel" data-i="${pc.yi}">${ic('x')}</button></span>
+    <button class="icon" data-act="incpage" data-dir="1" aria-label="Next year"${ui.incCol>=all.length-1?' disabled':''}>${ic('right')}</button></div>` : '';
   const colAttrs = c => `data-group="inc-years" data-i="${c.yi}" data-axis="x"`;
   const netCell = c => {
     const auto = autoNet(c.y.label), over = c.y.netOverride!==null && c.y.netOverride!==undefined;
     const hint = auto===null ? '<div class="muted small">typed in</div>'
       : over ? `<button class="link small" data-act="inetreset" data-i="${c.yi}">Use Paychecks (${money(auto)})</button>`
       : '<div class="muted small">from Paychecks</div>';
-    return `<input type="number" step="0.01" data-k="net.${esc(c.y.id)}" data-act="inet" data-i="${c.yi}" value="${esc(c.net)}" aria-label="Net pay ${esc(c.y.label)}">${hint}`;
+    return `<input type="number" step="0.01" data-k="net.${esc(c.y.id)}" data-act="inet" data-i="${c.yi}" value="${amt(c.net)}" aria-label="Net pay ${esc(c.y.label)}">${hint}`;
   };
-  const row = (label,f,cls='') => `<tr class="${cls}"><td>${label}</td>${cols.map(c=>`<td class="num" ${colAttrs(c)}>${f(c)}</td>`).join('')}<td></td></tr>`;
-  const head = cols.map(c=>`<th class="num" ${colAttrs(c)}><div class="row" style="flex-wrap:nowrap;gap:2px;justify-content:flex-end">
-      <span class="grip" draggable="true" tabindex="0" role="button" title="Drag to move this year (or focus and use ← →)" aria-label="Move year: use the left and right arrow keys">⋮⋮</span>${nudges(c.yi, cols.length, true)}
+  const row = (label,f,cls='') => `<tr class="${cls}"><td>${label}</td>${shownCols.map(c=>`<td class="num" ${colAttrs(c)}>${f(c)}</td>`).join('')}<td></td></tr>`;
+  const head = shownCols.map(c=>`<th class="num" ${colAttrs(c)}><div class="row" style="flex-wrap:nowrap;gap:2px;justify-content:flex-end">
+      <span class="grip" draggable="true" tabindex="0" role="button" title="Drag to move this year (or focus and use ← →)" aria-label="Move year: use the left and right arrow keys">${ic('grip')}</span>${nudges(c.yi, cols.length, true)}
       <input type="text" class="yearlabel" data-k="ylabel.${esc(c.y.id)}" data-act="ylabel" data-i="${c.yi}" value="${esc(c.y.label)}" aria-label="Year label">
-      <button class="icon" title="Delete this year" aria-label="Delete the ${esc(c.y.label)} year" data-act="ydel" data-i="${c.yi}">✕</button></div></th>`).join('');
+      <button class="icon" title="Delete this year" aria-label="Delete the ${esc(c.y.label)} year" data-act="ydel" data-i="${c.yi}">${ic('x')}</button></div></th>`).join('');
   const lineRows = lines.map((l,li)=>`<tr data-group="inc-lines" data-i="${li}">
-      <td><div class="row" style="flex-wrap:nowrap;gap:6px"><span class="grip" draggable="true" tabindex="0" role="button" title="Drag to reorder (or focus and use ↑ ↓)" aria-label="Reorder: use the up and down arrow keys">⋮⋮</span>${nudges(li, lines.length)}
-        <button class="sign ${l.sign<0?'minus':'plus'}" data-act="lsign" data-i="${li}" aria-label="${esc(l.name)}: ${l.sign<0?'subtracted from':'added to'} Disposable. Activate to switch." title="${l.sign<0?'Subtracted from':'Added to'} Disposable. Click to switch.">${l.sign<0?'−':'+'}</button>
+      <td><div class="row" style="flex-wrap:nowrap;gap:6px"><span class="grip" draggable="true" tabindex="0" role="button" title="Drag to reorder (or focus and use ↑ ↓)" aria-label="Reorder: use the up and down arrow keys">${ic('grip')}</span>${nudges(li, lines.length)}
+        <button class="sign ${l.sign<0?'minus':'plus'}" data-act="lsign" data-i="${li}" aria-label="${esc(l.name)}: ${l.sign<0?'subtracted from':'added to'} Disposable. Activate to switch." title="${l.sign<0?'Subtracted from':'Added to'} Disposable. Click to switch.">${ic(l.sign<0?'minus':'plus')}</button>
         <input type="text" data-k="lname.${esc(l.id)}" data-act="lname" data-i="${li}" value="${esc(l.name)}" aria-label="Line name"></div></td>
-      ${cols.map(c=>`<td class="num" ${colAttrs(c)}><input type="number" step="0.01" data-k="lamt.${esc(l.id)}.${esc(c.y.id)}" data-act="lamt" data-i="${li}" data-y="${esc(c.y.id)}" value="${esc(Number(l.amounts[c.y.id])||0)}" aria-label="${esc(l.name)} ${esc(c.y.label)}"></td>`).join('')}
-      <td><button class="icon" title="Delete this line" aria-label="Delete ${esc(l.name)}" data-act="ldel" data-i="${li}">✕</button></td></tr>`).join('');
+      ${shownCols.map(c=>`<td class="num" ${colAttrs(c)}><input type="number" step="0.01" data-k="lamt.${esc(l.id)}.${esc(c.y.id)}" data-act="lamt" data-i="${li}" data-y="${esc(c.y.id)}" value="${amt(Number(l.amounts[c.y.id])||0)}" aria-label="${esc(l.name)} ${esc(c.y.label)}"></td>`).join('')}
+      <td><button class="icon" title="Delete this line" aria-label="Delete ${esc(l.name)}" data-act="ldel" data-i="${li}">${ic('x')}</button></td></tr>`).join('');
   const snapshot = !years.length
     ? `<p class="muted">No years yet. <button class="btn small" data-act="yadd">+ Add year</button></p>`
-    : `<table><thead><tr><th></th>${head}<th><button class="btn small" data-act="yadd" title="Add a year column">+ Year</button></th></tr></thead><tbody>
+    : `<table class="inc${narrow?' one':''}">${narrow ? '' : `<thead><tr><th></th>${head}<th><button class="btn small" data-act="yadd" title="Add a year column">+ Year</button></th></tr></thead>`}<tbody>
       ${row('Net pay',netCell)}
       ${row('Expenses (Current, all expenses × 12)',c=>'−'+money(exp))}
       ${row('<b>Discretionary</b>',c=>`<b>${money(c.disc)}</b>`)}
       ${lineRows}
-      <tr><td colspan="${cols.length+2}"><button class="btn small" data-act="ladd">+ Add line</button>
-        <span class="muted small" style="margin-left:6px">Click − / + to subtract or add a line.</span></td></tr>
+      <tr><td colspan="${shownCols.length+2}"><button class="btn small" data-act="ladd">+ Add line</button>${narrow ? ' <button class="btn small" data-act="yadd">+ Add year</button>' : ''}
+        <span class="muted small hint"><span class="mouse-only">Click</span><span class="touch-only">Tap</span> − / + to subtract or add a line.</span></td></tr>
       ${row('Disposable',c=>`<span class="${c.disp<0?'bad':''}">${money(c.disp)}</span>`,'total')}
     </tbody></table>`;
   const monthlyBudget = levelTotal('current','extras');
@@ -635,13 +900,13 @@ function viewIncome(){
   return `
   <div class="card" style="margin-bottom:14px">
     <h2>Yearly income snapshot</h2>
-    ${hscroll('inc', snapshot)}
-    <p class="muted small">Disposable assumes no large unexpected expenses. <span class="mouse-only">Drag ⋮⋮ (or click it and use the arrow keys)</span><span class="touch-only">Use ◀▶ and ▲▼</span> to move a year or a line. If a year's label matches a year on the Paychecks tab, its net pay comes from there (received + projected), and you can type over it.</p>
+    ${pager}${narrow ? snapshot : hscroll('inc', snapshot)}
+    <p class="muted small">Disposable assumes no large unexpected expenses. <span class="mouse-only">Drag <span class="inl">${ic('grip')}</span> (or click it and use the arrow keys)</span><span class="touch-only">${narrow ? `Use <span class="inl">${ic('left')}${ic('right')}</span> to switch years and <span class="inl">${ic('up')}${ic('down')}</span> to move a line` : `Use <span class="inl">${ic('left')}${ic('right')}</span> and <span class="inl">${ic('up')}${ic('down')}</span> to move a year or a line`}</span><span class="mouse-only"> to move a year or a line</span>. If a year's label matches a year on the Paychecks tab, its net pay comes from there (received + projected), and you can type over it.</p>
   </div>
   <div class="card" style="max-width:520px">
     <h2>Monthly discretionary</h2>
     <table><tbody>
-      <tr><td>Typical paycheck</td><td class="num"><input type="number" step="0.01" data-k="typ" data-act="typ" value="${esc(state.typicalPaycheck)}" aria-label="Typical paycheck"></td></tr>
+      <tr><td>Typical paycheck</td><td class="num"><input type="number" step="0.01" data-k="typ" data-act="typ" value="${amt(state.typicalPaycheck)}" aria-label="Typical paycheck"></td></tr>
       <tr><td>Approx. Monthly Income</td><td class="num">${money(monthlyIncome)}</td></tr>
       <tr><td>Expenses (Current budget, all expenses)</td><td class="num">−${money(monthlyBudget)}</td></tr>
       <tr class="total"><td>Discretionary per month</td><td class="num ${monthlyDisc<0?'bad':''}">${money(monthlyDisc)}</td></tr>
@@ -701,9 +966,11 @@ document.addEventListener('click', e=>{
   if (d.year){ ui.year=d.year; saveUI(); render(); return; }
   const i = Number(d.i);
   switch(d.act){
+    case 'incpage': ui.incCol = Math.max(0, Math.min(state.income.years.length-1, (ui.incCol||0) + Number(d.dir))); render(); break;
     case 'nudge': { const host=groupEl(el), from=Number(host.dataset.i);
       if (moveItem(host.dataset.group, from, from+Number(d.dir))) commit(); break; }
-    case 'currency': state.currency = d.code; commit(); break;
+    case 'curmenu': curOpen = !curOpen; render(); break;
+    case 'currency': state.currency = d.code; curOpen = false; commit(); break;
     case 'theme': ui.theme = effectiveTheme()==='dark' ? 'light' : 'dark';
       document.documentElement.dataset.theme = ui.theme; saveUI(); renderThemeButton(); break;
     case 'badd': { const {b,t,list}=budgetCtx(el); list.push({name:'New item',monthly:0}); commit();
@@ -771,7 +1038,7 @@ document.addEventListener('change', e=>{
   }
   const P = () => state.paychecks[ui.year][i];
   switch(d.act){
-    case 'balance': state.balance=r2(v); state.balanceUpdated=today(); break;
+    case 'balance': state.balance=parseAmount(v); state.balanceUpdated=today(); break;
     case 'bname': { const c=budgetCtx(el); c.list[c.i].name=v; break; }
     case 'bamt': { const c=budgetCtx(el); c.list[c.i].monthly=r2(v); break; }
     case 'pdate':
@@ -889,6 +1156,9 @@ document.addEventListener('dragend', ()=>{
   pointerReleased(); // a drag can end without a pointerup; make sure typing redraws again
 });
 
+// Balance box: plain number while editing, separators ("100,000.00") otherwise.
+document.addEventListener('focusin', e=>{ if (e.target.dataset.act==='balance'){ e.target.value = amt(state.balance); e.target.select(); } });
+document.addEventListener('focusout', e=>{ if (e.target.dataset.act==='balance') e.target.value = grouped(parseAmount(e.target.value)); });
 document.addEventListener('input', e=>{
   if (e.target.dataset.act!=='notes') return;
   const wasOK = storageOK; state.notes=e.target.value; save();
