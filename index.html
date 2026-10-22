@@ -605,6 +605,11 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
   .pt tr.hasnote .notebtn{color:var(--accent)}
   .pt td input[data-money],.pt td input[type=date],.pt td input[type=text]{width:100%;min-width:0}
   .pt .pd input{padding-left:4px}
+  /* iPhone Safari gives a native date box its own minimum width, so it spilled under the status
+     mark beside it; without the native look it fits its column, and its text sits at the left */
+  .pt .pd input[type=date]{-webkit-appearance:none;appearance:none;display:block;max-width:100%}
+  .pt .pd input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
+  .pt .pd{overflow:hidden;padding:2px}
   .pt .pa::before,.pt .pp::before,.pt .pf::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;color:var(--muted);padding-right:9px}
   .pt .pf{text-align:right;font-variant-numeric:tabular-nums}
   .camptable tbody th,.camptable td{padding:10px 6px}
