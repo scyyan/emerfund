@@ -1,6 +1,6 @@
 // Offline support: keeps a copy of the app's files so it opens without internet.
 // VERSION changes automatically whenever the app files change, so phones pick up updates.
-const VERSION = 'efund-8d9b4b122b';
+const VERSION = 'efund-490c25a5d8';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'];
 
 self.addEventListener('install', e => {
@@ -27,6 +27,7 @@ self.addEventListener('fetch', e => {
   });
   const saved = () => caches.match(key.href).then(r => r || (e.request.mode === 'navigate' ? caches.match('./') : undefined));
   const slow = new Promise((_, reject) => setTimeout(reject, 2500));
-  e.respondWith(Promise.race([network, slow]).catch(() => saved().then(r => r || network)));
+  const usable = network.then(res => res.ok ? res : Promise.reject(new Error('bad status')));
+  e.respondWith(Promise.race([usable, slow]).catch(() => saved().then(r => r || network)));
   e.waitUntil(network.catch(() => {}));
 });

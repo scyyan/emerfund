@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qz0ivoAs0R2kmVw8LFv2Rw+i6f6Q6N4ElC2J8WWvYyI=' 'sha256-sQdYjq4wWnFLwTknEagQ9wa7Dv4zms3XK6gmZsJFiHQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qz0ivoAs0R2kmVw8LFv2Rw+i6f6Q6N4ElC2J8WWvYyI=' 'sha256-gZR2I0WHI9vq41caCn/srIlc/uqPGbeiecvY0w7MU4I='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#17402F" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F2A1E" media="(prefers-color-scheme: dark)">
@@ -1471,6 +1471,7 @@ function activity(){
 }
 // Web build only: the currency button before the balance and the picker beside it.
 function balanceSymbol(){ const c = CURRENCIES.find(c=>c[0]===currencyCode());
+  if (!matchMedia('(max-width:700px)').matches) return `<span class="cur-sym" aria-hidden="true">${c[1]}</span>`; // desktop: the picker is always open
   return `<button class="cur-sym" data-act="curmenu" aria-expanded="${curOpen}" aria-label="Currency: ${c[2]}. Change currency">${c[1]}</button>`; }
 function balanceExtras(){
   return `<div class="curgrid${curOpen?' open':''}" role="group" aria-label="Currency">${CURRENCIES.map(([code,sym,name])=>
@@ -1590,7 +1591,7 @@ function viewBudget(){
     <p class="muted small">Leave <b>Adjusted</b> blank to match Current, or type a lower amount for a lean emergency budget. Pick <b>/qtr</b> or <b>/yr</b> to enter a bill the way you pay it; totals are always per month. <span class="mouse-only">Drag <span class="inl">${ic('grip')}</span> (or click it and use the arrow keys)</span><span class="touch-only">Use <span class="inl">${ic('up')}${ic('down')}</span></span> to reorder.</p>
     <div class="card">${sections}
       <table class="bt grand"><tbody><tr class="total"><td class="bn" colspan="3">Total per month</td><td class="num bc">${money(c)}</td><td class="num ba">${money(a)}</td><td class="num bs">${savesCell(r2(c-a))}</td><td class="bd"></td></tr></tbody></table></div>
-    <div class="bsum" id="budgetSum" role="status" aria-label="Months covered by your savings at all expenses">${budgetSummary()}</div></div>`;
+    <div class="bsum" id="budgetSum" role="group" aria-label="Months covered by your savings at all expenses">${budgetSummary()}</div></div>`;
 }
 
 function chart(list){
@@ -1927,7 +1928,7 @@ function openFill(){
     <label class="field"><span class="lbl">Year</span><select name="year">${years.map(y=>`<option${y===pick?' selected':''}>${y}</option>`).join('')}</select></label>
     <label class="field"><span class="lbl">How often you're paid</span><select name="freq">${PAY_FREQS.map(([k,l])=>`<option value="${k}"${k===payEvery()?' selected':''}>${l}</option>`).join('')}</select></label>
     <label class="field"><span class="lbl">First pay date</span><input name="first" type="date"></label>
-    <label class="field"><span class="lbl">Amount each time</span><input name="amount" type="text" inputmode="decimal" autocomplete="off" data-money inputmode="decimal" value="${mval(amount)}"></label>
+    <label class="field"><span class="lbl">Amount each time</span><input name="amount" type="text" inputmode="decimal" autocomplete="off" data-money value="${mval(amount)}"></label>
     <p class="preview" aria-live="polite"></p>
     <div class="actions"><button type="button" class="btn" data-close>Cancel</button><button class="btn primary" value="ok">Add paychecks</button></div>`;
   let plan = [];
@@ -2026,7 +2027,7 @@ function openSetup(){
 
 /* ---------- Add money / Took money out ---------- */
 function openMoney(kind){
-  const add = kind==='add', sym = money(0).replace(/[0-9.,\s-]/g,'') || '$', cur = levelTotal('current', ui.level), verb = add ? 'Add' : 'Take out';
+  const add = kind==='add', sym = currencySymbol(), cur = levelTotal('current', ui.level), verb = add ? 'Add' : 'Take out';
   const html = `<h2 id="sheetTitle">${add ? 'Add money' : 'Took money out'}</h2>
     <p class="muted small">${add ? 'Logged in your history and added to your balance.' : "Logged in your history and taken off your balance. It's what the fund is for."}</p>
     <label class="field"><span class="lbl">Amount</span><span class="bigamt"><span aria-hidden="true">${esc(sym)}</span><input name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00"></span></label>
@@ -2254,8 +2255,8 @@ document.addEventListener('click', e=>{
       const name=`emergency-fund-backup-${today()}.json`;
       const blob=new Blob([JSON.stringify({app:'emergency-fund',version:2,exported:new Date().toISOString(),data:state},null,2)],{type:'application/json'});
       // Phones and tablets: open the share sheet (Save to Files, AirDrop, Mail…), since downloads are unreliable there.
-      const file=new File([blob], name, {type:'application/json'});
-      if (matchMedia('(pointer:coarse)').matches && navigator.canShare && navigator.canShare({files:[file]})){
+      const file = matchMedia('(pointer:coarse)').matches && typeof File==='function' ? new File([blob], name, {type:'application/json'}) : null;
+      if (file && navigator.canShare && navigator.canShare({files:[file]})){
         navigator.share({files:[file], title:'Emergency Fund backup'}).then(markBackup, ()=>{}); break;
       }
       const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
@@ -2268,7 +2269,7 @@ document.addEventListener('click', e=>{
     case 'reset': confirmSheet('Start over?', 'This clears all your data so you can start fresh. You can undo it right after.', 'Clear all data')
       .then(ok=>{ if (ok) undoable('All data cleared', ()=>{ state = fresh(); }); }); break;
     case 'clearall': confirmSheet('Clear all data?', 'This clears everything and starts over with a blank slate. You can undo it right after.', 'Clear all data')
-      .then(ok=>{ if (ok) undoable('All data cleared', ()=>{ state = normalize(clone(BLANK)); }); }); break;
+      .then(ok=>{ if (ok) undoable('All data cleared', ()=>{ const keep = state.currency; state = normalize(clone(BLANK)); if (keep) state.currency = keep; }); }); break;
     case 'undo': undo(); break;
     case 'toastx': hideToast(false); break;
     case 'restore': restoreTrash(d.id); break;
@@ -2286,12 +2287,15 @@ document.addEventListener('change', e=>{
       const at = obj.exported ? new Date(obj.exported) : null;
       return {data, when: at && !isNaN(at) ? niceDate(isoDate(at)) : ''};
     }).then(({data, when})=>{
-      return confirmSheet('Replace your data?', `This replaces everything in the app with the backup${when ? ' from '+when : ''}. A safety copy of your current data is kept in this browser.`, 'Restore backup').then(ok=>{
+      return confirmSheet('Replace your data?', `This replaces everything in the app with the backup${when ? ' from '+when : ''}. A safety copy of your current data is kept in this browser if possible.`, 'Restore backup').then(ok=>{
         if (!ok) return;
-        try { localStorage.setItem(KEY+'.beforeImport', JSON.stringify(state)); } catch(_){}
-        undoable(`Backup${when ? ' from '+when : ''} restored`, ()=>{ state = normalize(data); fileOrMove(); loadProblem = false; });
+        let kept = true;
+        if (!isBlank()) { try { localStorage.setItem(KEY+'.beforeImport', JSON.stringify(state)); } catch(_){ kept = false; } }
+        undoable(`Backup${when ? ' from '+when : ''} restored${kept ? '' : '. No safety copy could be saved, so use Undo if this was a mistake'}`,
+          ()=>{ state = normalize(data); fileOrMove(); loadProblem = false; });
       });
-    }).catch(()=>toast("That file doesn't look like an Emergency Fund backup.")).finally(()=>{el.value='';});
+    }).catch(err=>toast(err instanceof SyntaxError || (err && err.message==='bad')
+        ? "That file doesn't look like an Emergency Fund backup." : 'Could not restore that backup.')).finally(()=>{el.value='';});
     return;
   }
   const P = () => state.paychecks[ui.year][i];
@@ -2437,6 +2441,7 @@ document.addEventListener('focusout', e=>{ if (e.target.dataset.act==='target' &
 // The monthly-saving slider redraws the date and the dashed projection while it moves;
 // letting go saves the amount.
 function refreshPlan(rate){
+  if (!document.getElementById('trend')) return;   // tab changed before the frame fired
   const bal = Number(state.balance)||0, cur = levelTotal('current', ui.level);
   document.getElementById('trend').innerHTML = trendChart(bal, cur, rate);
   document.getElementById('planOut').innerHTML = planText(bal, cur, rate);
@@ -2501,7 +2506,11 @@ window.addEventListener('storage', e=>{ if (e.key===KEY){ hideToast(); state = l
 // Returning to the app on a new day (phones keep apps suspended for days): redraw so
 // "projected" vs "received" is judged against today's date.
 document.addEventListener('visibilitychange', ()=>{
-  if (document.visibilityState==='visible' && today()!==renderToday) render();
+  if (document.visibilityState==='hidden'){
+    // Leaving the page with a box still focused: blur it so its pending "change" fires and saves.
+    const a = document.activeElement;
+    if (a && a.matches && a.matches('input,textarea,select')) a.blur();
+  } else if (today()!==renderToday) render();
 });
 // Keep the sun/moon icon right when following the Mac's appearance setting.
 darkQuery.addEventListener('change', renderThemeButton);
@@ -2526,6 +2535,8 @@ helpDlg.addEventListener('click', e=>{ if (e.target === helpDlg) helpDlg.close()
 // Installed-app extra: work offline. (Asking the browser to keep saved data is in the app itself.)
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost'))
   navigator.serviceWorker.register('sw.js').catch(()=>{});
+document.addEventListener('click', e=>{ if (curOpen && !e.target.closest('.balcard')){ curOpen = false; render(); } });
+document.addEventListener('keydown', e=>{ if (e.key==='Escape' && curOpen){ curOpen = false; render(); } });
 </script>
 </body>
 </html>
