@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qz0ivoAs0R2kmVw8LFv2Rw+i6f6Q6N4ElC2J8WWvYyI=' 'sha256-sQdYjq4wWnFLwTknEagQ9wa7Dv4zms3XK6gmZsJFiHQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#17402F" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F2A1E" media="(prefers-color-scheme: dark)">
@@ -26,8 +27,8 @@ try { const th = JSON.parse(localStorage.getItem('emergencyFundDistro.v1.ui')||'
   color-scheme:light;
   --bg:#EEF2EC; --surface:#ffffff; --surface-2:#E4EAE4; --text:#14231C; --muted:#56685E; --line:#CCD6CE;
   --shell:#17402F; --shell-ink:#EAF2EC; --shell-dim:#B3C7BB; --contour:rgba(191,227,204,.22); --topo:#B98A62;
-  --accent:#2F7A55; --accent-soft:#DCEBE2; --t1:#A9D1B9; --t2:#5FA683; --t3:#2F7A55;
-  --marker:#C4410C; --on-marker:#fff; --warn:#A8481F; --warn-soft:#F8E2D6; --proj:#6D7F75; --on-accent:#fff;
+  --accent:#2A7050; --accent-soft:#DCEBE2; --t1:#A9D1B9; --t2:#5FA683; --t3:#2F7A55;
+  --scrim:#00000073; --marker:#BA3C08; --on-marker:#fff; --warn:#A8481F; --warn-soft:#F8E2D6; --proj:#586A60; --on-accent:#fff;
 }
 /* Dark palette: it appears twice (automatic + manual toggle). Keep both copies identical. */
 @media (prefers-color-scheme: dark){
@@ -85,10 +86,18 @@ nav button:focus-visible{outline-color:var(--shell-ink)}
 .t-short{display:none}
 .wrap{max-width:1080px;margin:0 auto;padding:24px 20px 64px}
 
+/* tab icons carry the marker dot while a paycheck waits for "Got it" */
+.ticon{position:relative;display:inline-flex}
+.tdot{position:absolute;top:-2px;right:-4px;width:9px;height:9px;border-radius:50%;background:var(--marker);box-shadow:0 0 0 2px var(--shell)}
+
 /* ---------- type ---------- */
 h1{margin:0}
+p{text-wrap:pretty}
+h2,h3{text-wrap:balance}
 h2{font-size:20px;font-weight:750;letter-spacing:-.015em;margin:0 0 12px}
 h3{font-size:14px;font-weight:650;margin:0 0 8px;color:var(--text)}
+h2.pagehead{margin:0 0 14px}
+h3.ch{font-size:17px;font-weight:750;letter-spacing:-.01em;margin:0 0 12px}
 .lbl{display:block;font-size:13px;font-weight:600;color:var(--muted)}
 .muted{color:var(--muted)}
 .small{font-size:13px}
@@ -97,7 +106,7 @@ h3{font-size:14px;font-weight:650;margin:0 0 8px;color:var(--text)}
 /* ---------- panels and layout ---------- */
 .card{border-top:1px solid var(--text);padding:16px 0 4px}
 .grid{display:grid;gap:16px}
-.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr));column-gap:48px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));column-gap:48px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .spacer{flex:1}
 .section-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:36px 0 14px}
@@ -162,6 +171,18 @@ h3{font-size:14px;font-weight:650;margin:0 0 8px;color:var(--text)}
   .curgrid.open{display:grid;grid-template-columns:repeat(5,36px);position:absolute;left:0;top:100%;z-index:5;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px -10px rgba(0,0,0,.3)}
   .curgrid.open .curbtn:first-child{grid-column:auto}
 }
+/* touch screens: 44px targets for the currency buttons */
+@media (pointer:coarse){
+  .curbtn{width:44px;height:44px;border-radius:22px}
+  .curgrid{grid-template-columns:repeat(2,44px)}
+  .curgrid.open{grid-template-columns:repeat(5,44px)}
+  .cur-sym{position:relative}
+  .cur-sym::after{content:'';position:absolute;inset:-10px -6px}
+}
+/* the currency symbol before the balance (the web build swaps in a currency picker button) */
+.balrow{display:flex;align-items:center;gap:4px}
+.balrow .balance-input{flex:1;min-width:0;margin-left:0}
+.cur-sym.fixed{font-size:24px;font-weight:700;color:var(--muted);padding:0 2px;line-height:1}
 .levels{margin-top:16px;justify-self:start}
 .seg button{white-space:nowrap}
 .fig b.empty{font-weight:300;color:var(--muted)}
@@ -169,7 +190,7 @@ h3{font-size:14px;font-weight:650;margin:0 0 8px;color:var(--text)}
 /* camps: months for every budget x level, one ramp colour per level; a row picks the climb's level */
 .swatch{width:12px;height:12px;border-radius:4px;flex:none}
 .camptable{max-width:720px;border-top:1px solid var(--text)}
-.camptable thead th{height:34px}
+.camptable thead th{height:34px;white-space:normal}
 .camptable tbody th,.camptable td{height:auto;padding:12px 10px}
 .camptable tbody th{padding-left:0}
 .camptable tbody tr{cursor:pointer}
@@ -179,7 +200,9 @@ h3{font-size:14px;font-weight:650;margin:0 0 8px;color:var(--text)}
 tr.on .camprow{color:var(--text)}
 .camptable td b{display:block;font-size:20px;font-weight:780;letter-spacing:-.02em}
 .camptable td b small{font-size:13px;color:var(--muted);font-weight:600;margin-left:3px;letter-spacing:0}
-.camptable .next{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.camptable .next{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;white-space:normal}
+.allsummit{margin:10px 0 0;color:var(--accent);font-weight:600}
+.allsummit .ic{display:inline-block;vertical-align:-3px;width:14px;height:14px;margin-right:4px}
 .camptable .next .ic{display:inline-block;vertical-align:-3px;width:14px;height:14px;margin-right:3px}
 
 /* the climb, touchable: read-outs on flags and pins, a draggable finish line, one celebration */
@@ -220,7 +243,7 @@ tr.on .camprow{color:var(--text)}
 /* first-run setup */
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .steps{display:flex;gap:6px;margin:0 0 14px}
-.steps i{width:22px;height:4px;border-radius:2px;background:var(--surface-2)}
+.steps i{width:22px;height:4px;border-radius:99px;background:var(--surface-2)}
 .steps i.on{background:var(--accent)}
 .scosts{display:grid;gap:2px;margin-top:12px;max-height:46vh;overflow:auto;padding-right:4px}
 .srow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px solid var(--line)}
@@ -292,7 +315,9 @@ tr.on .camprow{color:var(--text)}
 input,textarea,select{font:inherit;color:var(--text);background:transparent;border:1px solid transparent;border-radius:8px;padding:6px 8px;transition:border-color .15s,background-color .15s}
 input:hover,textarea:hover{border-color:var(--line);background:var(--surface)}
 input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent;background:var(--surface)}
-input[type=number]{text-align:right;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield}
+input[type=number],input[data-money]{text-align:right;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield}
+/* placeholders: the muted ink, not the browser's default grey (which fails contrast on the dark ground) */
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 input[type=date]{font-variant-numeric:tabular-nums}
 input[type=date]::-webkit-calendar-picker-indicator{opacity:.35;cursor:pointer}
@@ -331,7 +356,7 @@ textarea{width:100%;min-height:140px;resize:vertical;border-color:var(--line);ba
 .nudges.x{flex-direction:row}
 .nudge{padding:1px 4px}
 .nudge .ic{width:14px;height:14px}
-.nudge:disabled{opacity:.25;cursor:default}
+.nudge:disabled{opacity:.4;cursor:default}
 
 /* ---------- tables: dense, hairline-ruled ---------- */
 table{width:100%;border-collapse:collapse}
@@ -341,10 +366,26 @@ td input{padding-top:4px;padding-bottom:4px}
 th{font-size:12px;color:var(--muted);font-weight:650}
 tr.total td{font-weight:750;border-bottom:0;border-top:1px solid var(--text);padding-top:10px}
 td input[type=text]{width:100%;min-width:90px}
-td input[type=number]{width:112px}
+td input[type=number],td input[data-money]{width:116px}
 td.gripcell{width:22px;padding-right:0}
-.tier{display:flex;align-items:center;gap:8px}
-.tier h3{margin:0}
+/* plain amounts line up with the typed ones above them (a field's own padding and border are ~9px) */
+.inc td.num:not(:has(input)),.mt td.num:not(:has(input)){padding-right:15px}
+.card.other{margin-top:22px}
+.card.other .strip{margin:6px 0 10px}
+.tier{display:flex;align-items:center;gap:8px;margin:0}
+/* a Budget section's name folds its lines away; the subtotal stays */
+.tierbtn{display:inline-flex;align-items:center;gap:8px;border:0;background:none;color:var(--text);font:inherit;font-weight:650;padding:6px 8px 6px 0;margin:-6px 0;border-radius:8px;cursor:pointer;text-align:left}
+.tierbtn .muted{font-weight:600}
+.tierbtn .ic{width:14px;height:14px;color:var(--muted)}
+.tierbtn:hover .ic{color:var(--text)}
+/* the paycheck that needs you, at the top of Paychecks */
+.remind.needpay{margin:0 0 18px}
+.pt tr.fold td{padding:8px 0;height:auto}
+.dangerrow{margin-top:4px;gap:12px}
+/* Recently deleted, in Backup & Notes */
+.trasht td{height:auto;padding:10px 0}
+.trasht td span{display:block}
+.trasht .tr{text-align:right;width:1%;padding-left:12px}
 /* budget: one list per tier, Current and Adjusted side by side */
 .budget{max-width:860px}
 .budget>p{margin:6px 0 2px;max-width:72ch}
@@ -359,7 +400,7 @@ td.gripcell{width:22px;padding-right:0}
 .bt tr.total .bc,.bt tr.total .ba{padding-right:15px} /* line up with the amounts typed above */
 .ba input::placeholder{color:var(--muted);opacity:1}
 .ba input.own{color:var(--accent);font-weight:650}
-.psaves{display:none}
+.psaves{display:none;white-space:nowrap}
 .permo{display:block;font-size:12px;color:var(--muted);padding:0 9px 3px 0;font-variant-numeric:tabular-nums}
 .freq{position:relative;display:inline-flex;align-items:center}
 .freq select{appearance:none;-webkit-appearance:none;border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:700;padding:4px 22px 4px 9px;border-radius:8px;cursor:pointer}
@@ -384,6 +425,7 @@ tr.drop-after td{box-shadow:inset 0 -2px 0 var(--accent)}
 .mark{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:3px 9px 3px 7px;border-radius:99px;white-space:nowrap;border:1.5px solid transparent}
 .mark .ic{width:13px;height:13px}
 .mark.got{background:var(--accent-soft);color:var(--accent)}
+.notebtn{display:none}
 .mark.proj{border-style:dashed;border-color:var(--proj);color:var(--proj)}
 .mark.need{background:var(--marker);color:var(--on-marker)}
 button.mark{font:inherit;font-size:12px;font-weight:700;cursor:pointer}
@@ -398,7 +440,7 @@ tr.future input{color:var(--proj)}
 .chart-months{position:relative;height:16px;font-size:11px;color:var(--muted);margin-top:4px}
 .chart-months span{position:absolute;top:0;white-space:nowrap}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);margin-top:10px}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:4px;margin-right:6px;vertical-align:-1px}
 .banner{background:var(--warn-soft);color:var(--warn);padding:12px 16px;border-radius:12px;margin-bottom:16px;font-weight:600}
 /* Undo bar: what just happened, with a way back. Inverse ink, floating above the page. */
 .toast{position:fixed;left:0;right:0;bottom:24px;z-index:30;display:flex;align-items:center;gap:6px;width:max-content;max-width:calc(100% - 32px);margin:0 auto;padding:6px 6px 6px 16px;border-radius:12px;background:var(--text);color:var(--bg);font-size:14px;font-weight:600;box-shadow:0 10px 30px -10px rgba(0,0,0,.3);transform:translateY(12px);opacity:0;visibility:hidden;transition:transform .25s cubic-bezier(.16,1,.3,1),opacity .2s,visibility 0s .25s}
@@ -411,7 +453,7 @@ tr.future input{color:var(--proj)}
 .toast .icon{color:inherit;opacity:.75;padding:6px}
 /* Sheets: small in-app dialogs (confirmations, Fill the year). Bottom sheets on phones. */
 .sheet{width:calc(100% - 32px);max-width:440px;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 10px 40px rgba(0,0,0,.25)}
-.sheet::backdrop{background:rgba(0,0,0,.45)}
+.sheet::backdrop{background:var(--scrim)}
 .sheet form{padding:20px}
 .sheet h2{margin:0 0 6px}
 .sheet p{margin:0 0 4px}
@@ -419,6 +461,8 @@ tr.future input{color:var(--proj)}
 .sheet .field input,.sheet .field select{width:100%;border-color:var(--line);background:var(--surface);text-align:left}
 .field select{padding:7px 8px}
 .sheet .preview{margin:14px 0 0;padding:10px 12px;border-radius:8px;background:var(--surface-2);font-size:14px}
+.sheet .preview.warn{background:var(--warn-soft);color:var(--text)}
+.sheet .preview.warn .link{color:var(--warn);font-weight:650}
 .sheet .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
 @media (prefers-reduced-motion:reduce){ .toast,.toast.show{transition:opacity .2s} }
 /* Sideways-scrolling tables get a visible bar above and below (phones hide their own scroll
@@ -426,10 +470,19 @@ tr.future input{color:var(--proj)}
 .xscroll{overflow-x:auto;scrollbar-width:none}
 .xscroll::-webkit-scrollbar{display:none}
 .xbar{display:none;position:relative;height:16px;cursor:pointer;touch-action:none}
-.xbar::before{content:'';position:absolute;left:0;right:0;top:5px;height:6px;border-radius:3px;background:var(--surface-2)}
-.xbar i{position:absolute;top:5px;height:6px;border-radius:3px;background:var(--proj)}
+.xbar::before{content:'';position:absolute;left:0;right:0;top:5px;height:6px;border-radius:99px;background:var(--surface-2)}
+.xbar i{position:absolute;top:5px;height:6px;border-radius:99px;background:var(--proj)}
 .xwrap.overflow .xbar{display:block}
 hr{border:0;border-top:1px solid var(--line);margin:20px 0}
+
+/* the pinned summary on Budget: the answer stays in view while you edit the lines above it */
+.bsum{position:sticky;bottom:0;z-index:10;display:grid;grid-template-columns:1fr 1fr;margin:20px 0 0;padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--text)}
+.bsum-col{display:flex;flex-direction:column}
+.bsum-col+.bsum-col{border-left:1px solid var(--line);padding-left:20px}
+.bsum-col:first-child{padding-right:20px}
+.bsum b{font-size:24px;font-weight:780;letter-spacing:-.025em;line-height:1.15;font-variant-numeric:tabular-nums}
+.bsum b small{font-size:13px;font-weight:650;color:var(--accent);margin-left:5px;letter-spacing:0}
+.bsum-col.adj .lbl::before{content:'';display:inline-block;width:9px;height:9px;border:2.5px solid var(--text);border-radius:50%;margin-right:6px}
 
 /* ---------- touch screens ---------- */
 @media (pointer:coarse){
@@ -437,7 +490,7 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
   .nudges{display:inline-flex}
   .touch-only{display:inline}
   input,select,textarea{font-size:16px}
-  input[type=number],input[type=date],textarea{background:var(--surface-2)}
+  input[type=number],input[data-money],input[type=date],textarea{background:var(--surface-2)}
   td input[type=text]{border-bottom:1px dashed var(--line);border-radius:0}
   .balance-input{font-size:28px}
   .icon{padding:7px}
@@ -445,6 +498,24 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
   .nudge .ic{width:17px;height:17px}
   .freq select{font-size:16px;padding:3px 26px 3px 10px;background:var(--surface-2)}
   .xscroll input[type=date]::-webkit-calendar-picker-indicator{display:none} /* tapping the date opens the picker */
+  /* 44px touch targets: real size for fields and buttons, an invisible extension for small marks */
+  td input[data-money],td input[type=text],td input[type=date],.freq select{min-height:44px}
+  .icon,.btn,.seg button,.camprow,.theme-btn{min-height:44px}
+  .icon{min-width:44px}
+  .theme-btn{width:44px;border-radius:99px}
+  .nudge{padding:0}
+  /* the reorder arrows get a column as wide as they are, so they never sit over the name or the frequency menu */
+  td.gripcell{width:44px}
+  .tseg button{position:relative;min-width:44px}
+  .tseg button::after,.sign::after,.pin::after,.link::after{content:'';position:absolute;inset:-12px -6px}
+  .balance-input,.plan-box,.target-input,.yearlabel{min-height:44px}
+  .fhandle{width:44px}
+  .sign,.link{position:relative} /* (.pin is already positioned: it sits on the climb) */
+  .sign::after{inset:-12px -9px}
+  .hit{width:44px;height:44px}
+  .hit.ring{width:44px;height:44px}
+  button.mark.need{min-height:44px;padding:0 14px;font-size:13px}
+  nav button{min-height:48px}
 }
 
 /* ---------- phones: bottom tab bar, one job per screen ---------- */
@@ -472,11 +543,17 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
   .strip{grid-template-columns:1fr 1fr}
   .strip>div:first-child{grid-column:1/-1;border-bottom:1px solid var(--line)}
   .strip>div:nth-child(2){border-left:0;padding-left:0}
+  .card.other .strip>div:first-child{grid-column:auto;border-bottom:0}
+  .card.other .strip>div:nth-child(2){border-left:1px solid var(--line);padding-left:14px}
+  .card.other td input[type=text]{min-width:120px}
   .seg{display:flex}
   .seg button{flex:1 1 auto;padding:8px 10px;font-size:13px}
-  .levels{display:flex}
-  td input[type=number]{width:92px} th,td{padding:6px 3px;height:auto} td input[type=text]{min-width:64px}
-  .xscroll td input[type=date]{width:116px;padding-left:4px;padding-right:2px}
+  .levels{display:flex;justify-self:stretch}
+  /* the bottom bar is light, so the header's pale focus ring would vanish on it */
+  nav button:focus-visible{outline-color:var(--accent);outline-offset:-2px}
+  .tdot{box-shadow:0 0 0 2px var(--surface)}
+  .pt tr.fold{display:block;padding:4px 0}
+  td input[type=number],td input[data-money]{width:100px} th,td{padding:6px 3px;height:auto} td input[type=text]{min-width:64px}
   .pager{display:flex}
   .balance-input{font-size:20px}
   /* Income snapshot: room for line names and full amounts (it scrolls sideways) */
@@ -485,10 +562,10 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
   .inc.one .hint{display:block;margin:8px 0 2px}
   .inc .row input[type=text]{flex:1 1 0;min-width:0;width:0}
   .inc.one{table-layout:fixed}
-  .inc.one td:nth-child(2){width:112px}
+  .inc.one td:nth-child(2){width:124px}
   .inc.one td:last-child{width:38px}
-  .inc.one td input[type=number]{width:100px}
-  .inc td input[type=number]{width:104px}
+  .inc.one td input[type=number],.inc.one td input[data-money]{width:120px}
+  .inc td input[type=number],.inc td input[data-money]{width:108px}
   .section-head{margin-top:28px}
   /* Budget lines stack in two rows: name on top, then how often, Current and Adjusted */
   .bt,.bt thead,.bt tbody{display:block}
@@ -511,7 +588,25 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
   .bt thead .bc,.bt thead .ba,.bt tr.total .bc,.bt tr.total .ba{grid-row:1}
   .bt tr.total{border-top:1px solid var(--text);border-bottom:0;padding-top:10px}
   .bt tr.total .bc,.bt tr.total .ba{padding-right:9px}
-  .bt td input[type=number]{width:100%}
+  .bt td input[type=number],.bt td input[data-money]{width:100%}
+  td input[data-money]{padding-left:2px;padding-right:6px} /* room for six-figure amounts */
+  .inc td.num:not(:has(input)),.mt td.num:not(:has(input)){padding-right:10px}
+  /* Paychecks: each paycheck is two rows (date, status, delete / Actual, Projected, Diff); the note opens from an icon */
+  .pt,.pt thead,.pt tbody{display:block}
+  .pt thead{display:none}
+  .pt tr{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);column-gap:6px;row-gap:2px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+  .pt td{border:0;padding:0;height:auto;min-width:0}
+  .pt .pd{grid-column:1;grid-row:1} .pt .ps{grid-column:2;grid-row:1}
+  .pt .px{grid-column:3;grid-row:1;justify-self:end;display:flex}
+  .notebtn{display:inline-grid}
+  .pt .pa{grid-column:1;grid-row:2} .pt .pp{grid-column:2;grid-row:2} .pt .pf{grid-column:3;grid-row:2;padding-right:9px}
+  .pt .pn{grid-column:1/-1;grid-row:3;display:none}
+  .pt tr.hasnote .pn,.pt tr.noteopen .pn{display:block}
+  .pt tr.hasnote .notebtn{color:var(--accent)}
+  .pt td input[data-money],.pt td input[type=date],.pt td input[type=text]{width:100%;min-width:0}
+  .pt .pd input{padding-left:4px}
+  .pt .pa::before,.pt .pp::before,.pt .pf::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;color:var(--muted);padding-right:9px}
+  .pt .pf{text-align:right;font-variant-numeric:tabular-nums}
   .camptable tbody th,.camptable td{padding:10px 6px}
   .camptable td b{font-size:18px}
   .fig span em{font-size:13px}
@@ -520,9 +615,19 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
   .plan-box{font-size:20px}
   .camprow{padding:4px 6px;gap:8px}
   .toast{bottom:calc(76px + env(safe-area-inset-bottom))}
+  .bsum{bottom:calc(var(--navh,66px) + env(safe-area-inset-bottom,0px));margin:16px -16px 0;padding:8px 16px;grid-template-columns:1fr 1fr}
+  .bsum b{font-size:20px}
+  .bsum-col+.bsum-col{padding-left:14px}
+  .bsum .muted.small{font-size:12px}
+  body[data-tab=budget] .toast{bottom:calc(var(--navh,66px) + 86px + env(safe-area-inset-bottom))}
   .sheet{width:100%;max-width:none;margin:auto 0 0;border-radius:14px 14px 0 0;border-bottom:0}
   .sheet form{padding:20px 16px calc(20px + env(safe-area-inset-bottom))}
   .sheet .actions .btn{flex:1;justify-content:center}
+}
+/* the smallest phones (SE, mini with Display Zoom): slimmer amount columns so a Budget line still fits */
+@media (max-width:360px){
+  .bt tr{grid-template-columns:auto minmax(0,1fr) 88px 88px}
+  .freq select{padding-left:6px;padding-right:20px}
 }
 </style>
 </head>
@@ -541,7 +646,7 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
   </div>
 </header>
 <div class="wrap">
-  <div id="banner"></div>
+  <div id="banner" role="status"></div>
   <main id="app"></main>
 <dialog id="help" aria-labelledby="helpTitle">
   <div class="helphead"><h2 id="helpTitle">How to use E-Fund</h2>
@@ -557,16 +662,28 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
     </ol>
 
     <h3>Getting started</h3>
-    <p>The first time you open the app, a short setup asks for your balance, your essential monthly costs and a goal. You can skip it and fill things in yourself.</p>
+    <p>The first time you open the app, a short setup asks for your currency, your balance, your biggest monthly costs and a goal. You can skip it and fill things in yourself.</p>
     <ul>
-      <li><b>Overview:</b> type your emergency fund balance under the chart, and pick your currency with the buttons beside it. After that, tap <b>Add money</b> or <b>Take out</b> whenever money moves in or out. Each one is saved in your Activity and drawn on your progress chart.</li>
+      <li><b>Overview:</b> type your emergency fund balance under the chart, and pick your currency: on a computer use the buttons beside the balance, on a phone tap the symbol just before it. After that, tap <b>Add money</b> or <b>Take out</b> whenever money moves in or out. Each one is saved in your Activity and drawn on your progress chart.</li>
       <li><b>Your progress:</b> the chart shows your balance over time. Touch it to read any point. Drag the <b>Saving each month</b> slider to see when you'd reach your finish line or next camp.</li>
       <li><b>Target:</b> set your savings goal beside the balance, in money or in months (tap $ or mo). It shows up on the climb as a checkered finish line. You can also drag that flag left or right to move your goal; with no goal yet, drag the faint flag.</li>
-      <li><b>Budget:</b> set your costs. "Current" is what you spend now; "Adjusted" is a leaner version for a real emergency. Leave Adjusted blank to keep it the same as Current. Rename, add (+ Add line) or delete (the X button) lines as you like.</li>
+      <li><b>Budget:</b> set your costs. "Current" is what you spend now; "Adjusted" is a leaner version for a real emergency. Leave Adjusted blank to keep it the same as Current. Rename, add (+ Add line) or delete (the X button) lines as you like. A bar pinned to the bottom shows how many months you're covered as you edit.</li>
       <li><b>Paychecks:</b> tap "Fill the year…" to add a whole year on your pay schedule, or "+ Add paycheck" for one at a time. When a payday passes, tap <b>Got it</b> if the amount matched, or type what you received.</li>
+      <li><b>Other income:</b> below the paychecks, tap "+ Add income source" for side gigs, rent from a roommate or anything else that comes in. Enter the take-home amount, how often it arrives (week, month or year), and when it started. It's added on the Income tab for the part of each year it was active.</li>
       <li><b>Income:</b> tap "+ Add year" to start the yearly snapshot.</li>
     </ul>
     <p>Everything saves automatically as you type.</p>
+
+    <h3>What the numbers mean</h3>
+    <ul>
+      <li><b>Months covered:</b> your balance divided by a month of costs. If your income stopped today, that's how long your fund would last.</li>
+      <li><b>Necessities only, + Subs, + All Expenses:</b> which costs count. Necessities are the must-pays (housing, food, insurance); + Subs adds subscriptions and other recurring bills; + All Expenses adds everything else.</li>
+      <li><b>Current and Adjusted:</b> Current is how you spend now. Adjusted is a leaner budget you'd switch to in an emergency, so it stretches further; it's the hollow ring on the climb.</li>
+      <li><b>Camps:</b> 3, 6, 9 and 12 months covered. Many people aim for 3 to 6.</li>
+      <li><b>Monthly discretionary</b> (Income tab): a month of paychecks plus other income, minus your Current budget. It's what's left to save each month, and it's the starting amount for <b>Saving each month</b> until the app has a couple of months of your deposits to go on.</li>
+      <li><b>Disposable</b> (Income tab): the same idea for a whole year, after the extra + and − lines you add.</li>
+      <li>Right after setup, the months are based on only the few costs you entered. Add the rest on the Budget tab for the real number.</li>
+    </ul>
 
     <h3>Your data is private</h3>
     <ul>
@@ -585,7 +702,7 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
     <h3>Tips</h3>
     <ul>
       <li>Bills you pay yearly or every 3 months? Switch the line's <b>/mo</b> to <b>/yr</b> or <b>/qtr</b> and type the bill as it comes. Totals are always shown per month.</li>
-      <li>Deleted something by mistake? Tap <b>Undo</b> in the bar that appears at the bottom.</li>
+      <li>Deleted something by mistake? Tap <b>Undo</b> in the bar that appears at the bottom (tap it again to undo the change before). On a computer, Cmd+Z or Ctrl+Z works too. Deleted lines, paychecks and money entries also wait 30 days under <b>Recently deleted</b> on the Backup &amp; Notes tab.</li>
       <li>On Overview, tap a row under Camps to show that level on the climb.</li>
       <li>Tap a camp flag, your orange pin or the Adjusted ring on the climb to see the numbers behind it.</li>
       <li>The app gives you a gentle nudge when your balance hasn't been updated in a month, or when a backup is due.</li>
@@ -598,6 +715,7 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 </dialog>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="announce" class="sr-only" aria-live="polite"></div>
 <dialog id="sheet" class="sheet" aria-labelledby="sheetTitle"></dialog>
 
 <script>
@@ -610,6 +728,12 @@ const BUDGETS = [['current','Current'],['adjusted','Adjusted']];
 const TARGETS = [[3,'3 months'],[6,'6 months'],[9,'9 months'],[12,'1 year']];
 // How often a budget line is paid: [months per payment, short label, spoken label].
 const FREQS = [[1,'/mo','monthly'],[3,'/qtr','every 3 months'],[12,'/yr','yearly']];
+// Other income (Paychecks tab): how often an amount arrives, and how many times a year that is.
+const INC_FREQS = [['week','/wk','weekly',52],['month','/mo','monthly',12],['year','/yr','yearly',1]];
+// Paychecks a month on each pay schedule (the schedules "Fill the year" offers).
+const PAY_PER_MONTH = {'1w':52/12, '2w':26/12, '2m':2, '1m':1};
+// Things you deleted, kept 30 days so they can be restored from Backup & Notes.
+const TRASH_KINDS = ['bline','pay','log','oinc'], TRASH_DAYS = 30, TRASH_MAX = 25;
 // Money log entry kinds, and how an entry with no note of its own is described.
 const LOG_KINDS = ['start','add','out','adjust'];
 const KIND_NOTE = {start:'Starting balance', add:'Deposit', out:'Withdrawal', adjust:'Balance update'};
@@ -634,6 +758,9 @@ const r2 = n => cents(n)/100;
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // Amount for a number box: always two decimals ("2000.00" next to "49.99"), blank when unset.
 const amt = n => (n===null || n===undefined || n==='') ? '' : (Number(n)||0).toFixed(2);
+// The same amount as an amount box shows it at rest: "$4,461.47" (blank when unset). While you
+// type, the box holds plain digits instead (see the focusin/focusout handlers).
+const mval = n => (n===null || n===undefined || n==='') ? '' : money(n);
 // The balance box shows thousands separators ("100,000.00") until you start editing it.
 const grouped = n => (Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 // Reads "1,234.56" and "1234.56", and also "12,50" or "1.234,56" typed with a decimal comma.
@@ -649,7 +776,7 @@ const ICONS = {
   check:'<path d="M4.5 10.5l3.5 3.5 7.5-8"/>',
   up:'<path d="M5.5 12.5l4.5-4.5 4.5 4.5"/>', down:'<path d="M5.5 8l4.5 4.5L14.5 8"/>',
   left:'<path d="M12 5.5L7.5 10l4.5 4.5"/>', right:'<path d="M8 5.5l4.5 4.5L8 14.5"/>',
-  minus:'<path d="M5 10h10"/>', plus:'<path d="M10 5v10M5 10h10"/>',
+  minus:'<path d="M5 10h10"/>', note:'<path d="M5.5 3.5h6l3.5 3.5v9.5h-9.5zM11.5 3.5V7H15M7.5 10.5h5M7.5 13.5h3.5"/>', plus:'<path d="M10 5v10M5 10h10"/>',
   grip:'<g fill="currentColor" stroke="none"><circle cx="7.5" cy="5" r="1.4"/><circle cx="12.5" cy="5" r="1.4"/><circle cx="7.5" cy="10" r="1.4"/><circle cx="12.5" cy="10" r="1.4"/><circle cx="7.5" cy="15" r="1.4"/><circle cx="12.5" cy="15" r="1.4"/></g>',
 };
 const ic = (name, label) => `<svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'}>${ICONS[name]}</svg>`;
@@ -736,6 +863,16 @@ function normalize(s){
   s.balance = num(s.balance);
   s.balanceUpdated = isISODate(s.balanceUpdated) ? s.balanceUpdated : today();
   s.typicalPaycheck = num(s.typicalPaycheck);
+  // How often you're paid; null means "work it out from the pay dates on the Paychecks tab".
+  s.payEvery = typeof s.payEvery==='string' && PAY_PER_MONTH.hasOwnProperty(s.payEvery) ? s.payEvery : null;
+  // Set by first-run setup, which asks for only a few costs; cleared once you edit the Budget.
+  s.budgetDraft = s.budgetDraft === true;
+  const oneSource = o => {
+    const start = isISODate(o.start) ? o.start : today(), end = isISODate(o.end) && o.end >= start ? o.end : null;
+    return {id:okId(o.id), name:String(o.name??''), amount:num(o.amount),
+      every: INC_FREQS.some(f=>f[0]===o.every) ? o.every : 'month', start, end};
+  };
+  s.otherIncome = (Array.isArray(s.otherIncome) ? s.otherIncome : []).filter(o=>o && typeof o==='object').map(oneSource);
   s.notes = String(s.notes ?? '');
   // Savings target (the finish line): dollars or months, null when not set.
   const tg = s.target || {};
@@ -752,6 +889,17 @@ function normalize(s){
   // Monthly saving for the finish-line date: a number you set, or null to work it out.
   const pm = numOrNull((s.plan||{}).monthly);
   s.plan = {monthly: pm !== null && pm >= 0 ? pm : null};
+  // Recently deleted: budget lines, paychecks, money log entries and other income sources.
+  const isObj = o => !!o && typeof o==='object';
+  const since = addDays(today(), -TRASH_DAYS);
+  s.trash = (Array.isArray(s.trash) ? s.trash : []).filter(x=>isObj(x) && TRASH_KINDS.includes(x.kind) && isObj(x.item) && isISODate(x.at) && x.at >= since)
+    .map(x=>{ const it = x.item, out = {id:okId(x.id), kind:x.kind, at:x.at, label:String(x.label??'')};
+      if (x.kind==='bline'){ out.t = TIERS.some(([t])=>t===x.t) ? x.t : 'necessities'; out.i = Math.max(0, Math.floor(Number(x.i))||0);
+        out.item = {name:String(it.name??''), cur:num(it.cur), adj:numOrNull(it.adj), every: FREQS.some(f=>f[0]===Number(it.every)) ? Number(it.every) : 1}; }
+      else if (x.kind==='pay') out.item = {date: isISODate(it.date) ? it.date : today(), actual:numOrNull(it.actual), projected:num(it.projected), note:String(it.note??'')};
+      else if (x.kind==='log') out.item = {id:okId(it.id), date: isISODate(it.date) ? it.date : today(), delta:num(it.delta), note:String(it.note??''), kind:LOG_KINDS.includes(it.kind) ? it.kind : 'adjust'};
+      else out.item = oneSource(it);
+      return out; }).slice(-TRASH_MAX);
   return s;
 }
 // True only if the data has every list the screens rely on (used for saved data and imports).
@@ -784,7 +932,13 @@ function load(){
   } catch(e){
     // Keep the unreadable copy under another name so nothing is lost, and warn on screen.
     loadProblem = true;
-    try { localStorage.setItem(KEY+'.unreadable-'+Date.now(), raw); } catch(_){}
+    try {
+      const k = KEY+'.unreadable', old = localStorage.getItem(k);
+      if (old !== raw) {              // keep one earlier copy instead of an ever-growing pile
+        if (old !== null) localStorage.setItem(k+'.prev', old);
+        localStorage.setItem(k, raw);
+      }
+    } catch(_){}
     return fresh();
   }
 }
@@ -829,6 +983,11 @@ function fileOrMove(){
   Object.values(state.paychecks).forEach(l=>l.sort((a,b)=>a.date.localeCompare(b.date)));
   if (movedTo){ ui.year = movedTo; saveUI(); }
 }
+// Paychecks whose date has passed with no amount yet, oldest first, with the year list they're in.
+function pendingPays(){
+  return Object.entries(state.paychecks).flatMap(([y,list])=>list.map((p,i)=>({p, y, i})))
+    .filter(x=>payStatus(x.p)==='confirm').sort((a,b)=>a.p.date.localeCompare(b.p.date));
+}
 function payExpected(p){ return payStatus(p)==='received' ? Number(p.actual) : Number(p.projected)||0; }
 function yearTotals(y){
   const list = state.paychecks[y]||[];
@@ -842,6 +1001,34 @@ function yearTotals(y){
 }
 // Net pay from the Paychecks tab for a year label, or null if that tab has no such year.
 function autoNet(label){ const l = state.paychecks[label]; return l && l.length ? yearTotals(label).expected : null; }
+// Other income sources: a take-home amount per week, month or year, active from a start date
+// to an optional end date. A year counts only the days it was active.
+const srcYearly = s => s.amount * (INC_FREQS.find(f=>f[0]===s.every) || INC_FREQS[1])[3];
+function otherForYear(label){
+  if (!/^\d{4}$/.test(label)) return null; // a column not named like a year can't be prorated
+  const y0 = `${label}-01-01`, y1 = `${label}-12-31`, days = daysBetween(y0, y1) + 1;
+  return r2(sum(state.otherIncome.map(s=>{
+    const a = s.start > y0 ? s.start : y0, b = s.end && s.end < y1 ? s.end : y1;
+    return a > b ? 0 : srcYearly(s) * (daysBetween(a, b) + 1) / days;
+  })));
+}
+const srcActive = (s, d=today()) => s.start <= d && (!s.end || s.end >= d);
+function otherMonthlyNow(){ return r2(sum(state.otherIncome.filter(s=>srcActive(s)).map(s=>srcYearly(s)/12))); }
+// How often you're paid: the schedule you picked, else read from the gaps between your latest
+// pay dates (weekly, every 2 weeks, the 15th and last day, or monthly), else twice a month.
+function inferPayEvery(){
+  const dates = Object.values(state.paychecks).flat().map(p=>p.date).sort().slice(-7);
+  if (dates.length < 3) return null;
+  const gaps = dates.slice(1).map((d,k)=>daysBetween(dates[k], d)).sort((a,b)=>a-b), gap = gaps[gaps.length >> 1];
+  if (gap <= 9) return '1w';
+  if (gap >= 25) return '1m';
+  const midOrEnd = d => { const [y,m,dd] = d.split('-').map(Number); return dd===15 || dd===lastDay(y, m-1); };
+  return dates.every(midOrEnd) ? '2m' : '2w';
+}
+function payEvery(){ return state.payEvery || inferPayEvery() || '2m'; }
+function monthlyIncome(){ return r2((Number(state.typicalPaycheck)||0) * PAY_PER_MONTH[payEvery()]); }
+// The Income tab's monthly discretionary: a month of typical paychecks plus other income, less the budget.
+function monthlyDiscretionary(){ return r2(monthlyIncome() + otherMonthlyNow() - levelTotal('current','extras')); }
 function netPay(y){
   if (y.netOverride!==null && y.netOverride!==undefined) return Number(y.netOverride)||0;
   return autoNet(y.label) ?? 0;
@@ -864,7 +1051,7 @@ function savingsRate(ignoreSet=false){
     const pace = r2(sum(recent.map(e=>e.delta)) / (Math.min(90, covered) / 30.44));
     if (recent.length && pace > 0) return {rate: pace, source:'pace'};
   }
-  const disc = r2((Number(state.typicalPaycheck)||0)*2 - levelTotal('current','extras'));
+  const disc = monthlyDiscretionary();
   return disc > 0 ? {rate: disc, source:'income'} : {rate: 0, source:'none'};
 }
 // What the date aims at: your finish line, or (with none set, or once it's crossed) the next camp.
@@ -966,9 +1153,9 @@ function setupHScroll(wrap){
   wrap._update = update;
   update();
 }
-window.addEventListener('resize', ()=>document.querySelectorAll('.xwrap').forEach(w=>w._update && w._update()));
 let lastW = window.innerWidth, resizeTimer;
 window.addEventListener('resize', ()=>{
+  document.querySelectorAll('.xwrap').forEach(w=>w._update && w._update());
   if (!['overview','income'].includes(ui.tab) || window.innerWidth===lastW) return; // phone keyboards change height, not width
   lastW = window.innerWidth; clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 120);
 });
@@ -980,9 +1167,13 @@ function render(){
   skipRefocus = false;
   renderToday = today();
   renderThemeButton();
-  document.getElementById('tabs').innerHTML = TABS.map(([k,l,short])=>`<button class="${ui.tab===k?'on':''}" data-tab="${k}"${ui.tab===k?' aria-current="page"':''}>${tabIcon(k)}${short ? `<span class="t-long">${l}</span><span class="t-short">${short}</span>` : `<span>${l}</span>`}</button>`).join('');
+  // A paycheck waiting for "Got it" puts the marker dot on its tab, so it's found without hunting.
+  const waiting = pendingPays().length;
+  document.getElementById('tabs').innerHTML = TABS.map(([k,l,short])=>{ const dot = k==='paychecks' && waiting;
+    return `<button class="${ui.tab===k?'on':''}" data-tab="${k}"${ui.tab===k?' aria-current="page"':''}><span class="ticon">${tabIcon(k)}${dot ? '<i class="tdot" aria-hidden="true"></i>' : ''}</span>${short ? `<span class="t-long">${l}</span><span class="t-short">${short}</span>` : `<span>${l}</span>`}${dot ? `<span class="sr-only">, ${waiting} to confirm</span>` : ''}</button>`; }).join('');
   renderBanner();
   const views = {overview:viewOverview,budget:viewBudget,paychecks:viewPaychecks,income:viewIncome,settings:viewSettings};
+  document.body.dataset.tab = ui.tab;
   document.getElementById('app').innerHTML = views[ui.tab]();
   document.querySelectorAll('.xwrap').forEach(w=>{
     if (scrolled[w.dataset.x]) w.querySelector('.xscroll').scrollLeft = scrolled[w.dataset.x];
@@ -996,7 +1187,7 @@ function render(){
 
 // Months the balance covers, as display text. With no monthly costs entered there's
 // nothing to divide by, so show a dash rather than a misleading "0.0".
-function coverage(bal, monthly){ return monthly > 0 ? (bal/monthly).toFixed(1) : '—'; }
+function coverage(bal, monthly){ return monthly > 0 ? Math.max(0, bal/monthly).toFixed(1) : '—'; }
 // The savings target in both units at this monthly cost, or null when none is set.
 // months is null when a dollar target can't be placed (no monthly costs entered yet).
 function targetInfo(bal, monthly){
@@ -1015,23 +1206,44 @@ function nudges(i, count, horizontal=false){
 }
 // A moment worth marking: a balance change just carried you past a camp or your finish line
 // (at the expense level on screen). It's drawn once; the message stays for a few seconds.
-let celebrate = null; // {kind:'camp'|'finish', n, at, drawn}
+// Dropping back below one is said too, gently and without the animation.
+let celebrate = null; // {kind:'camp'|'finish'|'drop'|'dropfinish', n, at, drawn}
 function noteCrossing(oldBal){
   const cur = levelTotal('current', ui.level), bal = state.balance;
-  if (!(cur > 0) || !(bal > oldBal)) return;
-  const ti = targetInfo(bal, cur);
-  if (ti && ti.dollars !== null && oldBal < ti.dollars && bal >= ti.dollars){ celebrate = {kind:'finish', at:Date.now()}; return; }
-  const n = TARGETS.map(([k])=>k).filter(k=>oldBal < cur*k && bal >= cur*k).pop();
-  if (n) celebrate = {kind:'camp', n, at:Date.now()};
+  if (!(cur > 0) || bal === oldBal || state.budgetDraft) return; // a half-filled budget can't say you've arrived
+  const was = celebrate, ti = targetInfo(bal, cur), fin = ti && ti.dollars !== null ? ti.dollars : null, ks = TARGETS.map(([k])=>k);
+  if (bal > oldBal){
+    if (fin !== null && oldBal < fin && bal >= fin) celebrate = {kind:'finish', at:Date.now()};
+    else { const n = ks.filter(k=>oldBal < cur*k && bal >= cur*k).pop(); if (n) celebrate = {kind:'camp', n, at:Date.now()}; }
+  } else {
+    if (fin !== null && oldBal >= fin && bal < fin) celebrate = {kind:'dropfinish', at:Date.now()};
+    else { const n = ks.find(k=>oldBal >= cur*k && bal < cur*k); if (n) celebrate = {kind:'drop', n, at:Date.now()}; }
+  }
+  if (celebrate !== was) announce(celebrationText(celebrate, ti));
 }
+const isDrop = cel => cel.kind==='drop' || cel.kind==='dropfinish';
 function celebrationText(cel, ti){
+  const bal = Number(state.balance)||0, cur = levelTotal('current', ui.level);
+  if (cel.kind==='dropfinish') return `<strong>Just under your finish line for now.</strong> ${money(Math.max(0, r2((ti ? ti.dollars : 0) - bal)))} gets you back.`;
+  if (cel.kind==='drop') return `<strong>Below the ${cel.n===12 ? '1-year summit' : cel.n+'-month camp'} for now.</strong> ${money(Math.max(0, r2(cur*cel.n - bal)))} gets you back. It's what the fund is for.`;
   if (cel.kind==='finish') return `<strong>You crossed your finish line!</strong> ${money(ti ? ti.dollars : 0)} saved. Time to pick the next one?`;
   if (cel.n===12) return '<strong>Summit! A full year covered.</strong> That is a serious safety net.';
   return `<strong>You just reached the ${cel.n}-month camp!</strong> ${cel.n} months of expenses covered.`;
 }
+// Screen readers hear the moments the page only shows (celebrations, crossings).
+function announce(html){
+  const el = document.getElementById('announce'); if (!el) return;
+  el.textContent = ''; setTimeout(()=>{ el.textContent = html.replace(/<[^>]+>/g, ''); }, 60);
+}
+// Lines with an amount at the level on screen: how much of the budget the months figure rests on.
+function costsEntered(level){
+  const n = LEVELS.find(l=>l[0]===level)[2];
+  return TIERS.slice(0,n).reduce((a,[t])=>a + state.budget[t].filter(i=>i.cur > 0).length, 0);
+}
 // Gentle nudges: a balance that hasn't been touched in a month, and a backup that's due.
 function updatedLine(){
   const n = daysBetween(state.balanceUpdated, today());
+  if (!state.log.length) return `<span class="muted small">Not entered yet</span>`;
   return n >= 30 && state.balance > 0
     ? `<span class="small stale">Updated ${n} days ago. Still right? <button class="link" data-act="stillright">Yes, still right</button></span>`
     : `<span class="muted small">Updated ${niceDate(state.balanceUpdated)}</span>`;
@@ -1045,15 +1257,23 @@ function backupNudge(){
   const t = today();
   if (!storageOK || isBlank() || (ui.backupSnooze && ui.backupSnooze > t)) return '';
   const since = ui.lastBackup ? daysBetween(ui.lastBackup, t) : null;
-  if (since === null ? daysBetween(ui.firstSeen || t, t) < 7 : since < 30) return '';
+  // In a plain browser tab saved data is easier for the browser to discard, so remind sooner.
+  const installed = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  if (since === null ? daysBetween(ui.firstSeen || t, t) < (installed ? 7 : 2) : since < (installed ? 30 : 14)) return '';
   return `<div class="remind" role="status"><i class="rdot" aria-hidden="true"></i>
     <p><b>${since === null ? 'No backup on this device yet.' : `Your last backup here was ${since} days ago.`}</b> Your numbers live only in this browser, so a copy keeps them safe.</p>
     <span class="row"><button class="btn small primary" data-act="export">Export backup</button><button class="link small" data-act="backuplater">Later</button></span></div>`;
 }
 // One encouraging line about where the climb stands, with the amount to the next camp.
 function cheer(bal, monthly, ti){
+  // Right after setup only a few costs are in, so the months are generous: say so, and hold the finish-line news.
+  if (state.budgetDraft && monthly > 0 && bal > 0){ const n = costsEntered(ui.level);
+    return `<strong>Based on ${n} cost${n===1?'':'s'} so far.</strong> Add the rest on the <button class="link" data-tab="budget">Budget tab</button> to see how far your fund really reaches.`; }
+  if (bal < 0) return `<strong>Your balance is below zero.</strong> Check the amount below; a deposit starts the climb again.`;
+  if (bal === 0 && state.log.length) return `<strong>Your fund did its job.</strong> Every deposit from here starts the climb again.`;
   if (ti && ti.dollars !== null && bal > 0){
-    if (ti.reached) return `<strong>Finish line crossed!</strong> ${money(r2(bal - ti.dollars))} past your goal.`;
+    if (ti.reached) return r2(bal - ti.dollars) > 0 ? `<strong>Finish line crossed!</strong> ${money(r2(bal - ti.dollars))} past your goal.`
+                                                     : `<strong>You're right on your finish line!</strong> Your goal is fully funded.`;
     return `<strong>${ti.pct}% of the way.</strong> ${money(ti.toGo)} to your finish line.`;
   }
   if (!(monthly > 0)) return `<strong>Set your trail.</strong> Add your monthly costs on the Budget tab to see how far your fund reaches.`;
@@ -1151,7 +1371,8 @@ function profile(bal, cur, adj, tier, ti, cel){
 // Your balance over time from the money log, and (dashed) where your monthly saving takes it.
 // The pointer readout snaps to the points stored in trendData.
 let trendData = null;
-const moneyShort = n => (money(0).replace(/[0-9.,\s-]/g,'') || '$') + new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(n);
+const currencySymbol = () => money(0).replace(/[0-9.,\s-]/g,'') || '$';
+const moneyShort = n => currencySymbol() + new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(n);
 function trendChart(bal, monthly, rate){
   trendData = null;
   if (!state.log.length) return `<p class="muted trend-empty">Enter your balance above and your progress line starts here.</p>`;
@@ -1228,7 +1449,7 @@ function trendChart(bal, monthly, rate){
     </svg>
     ${ticks.join('')}${camps.map(c=>c.label).join('')}${finishLabel}${etaLabel}${xl}
     <div class="scrub" hidden><i class="dot"></i><div class="tip"><b></b><span></span></div></div>
-  </div><span class="sr-only" id="trendLive" aria-live="polite"></span>${pts.length < 2 && state.log.length < 2 ? '<p class="muted small trend-note">Your progress line starts here. Log your next deposit with <b>Add money</b>.</p>' : ''}`;
+  </div><span class="sr-only" id="trendLive" aria-live="polite"></span>${pts.length < 2 && state.log.length < 2 ? '<p class="muted small trend-note">Your progress line starts here. Log your next deposit with <b><span class="t-long">Add money</span><span class="t-short">Add</span></b>.</p>' : ''}`;
 }
 // Recent money log entries, newest first; the full list on request. Notes are editable.
 function activity(){
@@ -1253,7 +1474,7 @@ function viewOverview(){
   const tier = LEVELS.findIndex(l=>l[0]===ui.level) + 1;
   const cur = levelTotal('current', ui.level), adj = levelTotal('adjusted', ui.level);
   const ti = targetInfo(bal, cur), tmode = state.target.mode, tv = state.target.value;
-  const curSym = money(0).replace(/[0-9.,\s-]/g,'') || '$';
+  const curSym = currencySymbol();
   const tval = tv === null ? '' : tmode==='dollars' ? grouped(tv) : String(tv);
   const tother = !ti ? 'Your finish line on the climb'
     : tmode==='dollars' ? (ti.months !== null ? `= ${ti.months.toFixed(1)} months at current spending` : 'Add monthly costs to place it')
@@ -1270,10 +1491,14 @@ function viewOverview(){
     none:'Drag to try a monthly amount.'}[plan.source];
   const levelSeg = `<div class="seg levels" role="group" aria-label="Expenses counted">${LEVELS.map(([k,l])=>`<button class="${ui.level===k?'on':''}" data-level="${k}" aria-pressed="${ui.level===k}">${l}</button>`).join('')}</div>`;
   // Camps: months covered for each budget and level, plus what it takes to reach the next camp.
+  // When every budget and level is past the 1-year summit, one line says so instead of six ticks.
+  const allSummit = [...LEVELS.map(l=>levelTotal('current',l[0])), ...LEVELS.map(l=>levelTotal('adjusted',l[0]))].every(m=>m > 0 && bal >= m*12);
   const campCell = monthly => {
     if (!(monthly > 0)) return '<td class="num"><b>—</b></td>';
     const next = TARGETS.find(([n])=>bal < monthly*n);
-    const sub = next ? `${money(r2(monthly*next[0] - bal))} to ${next[0]===12 ? '1 yr' : next[0]+' mo'}`
+    if (!next && allSummit) return `<td class="num"><b>${coverage(bal, monthly)}<small>mo</small></b></td>`;
+    // Whole amounts (rounded up, so "to go" is never short) keep the line short enough for a phone.
+    const sub = next ? `${money(Math.ceil(monthly*next[0] - bal)).replace(/\.00$/,'')} to ${next[0]===12 ? '1&nbsp;yr' : next[0]+'&nbsp;mo'}`
                      : `<span class="ok">${ic('check')}Summit</span>`;
     return `<td class="num"><b>${coverage(bal, monthly)}<small>mo</small></b><span class="next">${sub}</span></td>`;
   };
@@ -1283,13 +1508,14 @@ function viewOverview(){
     ${LEVELS.map(([lv,lvLabel],li)=>`<tr class="${ui.level===lv?'on':''}" data-levelrow="${lv}">
       <th scope="row"><button class="camprow" data-act="camplevel" data-level="${lv}" aria-pressed="${ui.level===lv}"><i class="swatch" style="background:var(--t${li+1})"></i>${lvLabel}</button></th>
       ${campCell(levelTotal('current',lv))}${campCell(levelTotal('adjusted',lv))}</tr>`).join('')}
-    </tbody></table>`;
+    </tbody></table>${allSummit ? `<p class="muted small allsummit">${ic('check')}Every budget and level is past the 1-year summit.</p>` : ''}`;
   return `
-  <section class="summit">
+  <section class="summit" aria-labelledby="figHead">
+    <h2 class="sr-only" id="figHead">Months covered</h2>
     <div class="fig"><b${cur > 0 ? '' : ' class="empty"'}>${coverage(bal, cur)}</b><span>months covered${cur > 0 && bal > 0 && bal/cur <= MAX_MONTHS_AHEAD ? `<em>through ${monthYear(addMonths(today(), bal/cur))}</em>` : ''}</span></div>
     <p class="cheer">${cel ? celebrationText(cel, ti) : cheer(bal, cur, ti) + (bal > 0 ? recentChange() : '')}</p>
     ${levelSeg}
-    ${profile(bal, cur, adj, tier, ti, animate ? cel : null)}
+    ${profile(bal, cur, adj, tier, ti, animate && !isDrop(cel) ? cel : null)}
     <div class="duo">
       <div class="stat balcard"><div class="balmain"><label class="lbl" for="balanceBox">Current savings balance</label>
         <div class="balrow">${balanceSymbol()}<input class="balance-input" id="balanceBox" type="text" inputmode="decimal" autocomplete="off" data-k="balance" data-act="balance" value="${grouped(bal)}"></div>
@@ -1308,8 +1534,8 @@ function viewOverview(){
   <div class="progress">
     <div class="card plan"><h3>${!(cur > 0) ? 'Plan your climb' : !goal ? 'Keep climbing' : goal.short==='Finish line' ? 'Reach your finish line' : 'Reach your next camp'}</h3>
       <div class="plan-amt"><label class="lbl" for="planBox">Saving each month</label>
-        <input class="plan-box" id="planBox" type="text" inputmode="decimal" autocomplete="off" data-k="planbox" data-act="planbox" value="${grouped(plan.rate)}"></div>
-      <input class="plan-range" type="range" min="0" max="${pmax}" step="${niceUp(pmax/100)}" value="${plan.rate}" data-act="plan" aria-label="Monthly saving">
+        <input class="plan-box" id="planBox" type="text" inputmode="decimal" autocomplete="off" data-k="planbox" data-act="planbox" value="${mval(plan.rate)}"></div>
+      <input class="plan-range" type="range" min="0" max="${pmax}" step="${niceUp(pmax/100)}" value="${plan.rate}" data-act="plan" aria-label="Monthly saving" aria-valuetext="${money(plan.rate)} a month">
       <p class="plan-out" id="planOut">${planText(bal, cur, plan.rate)}</p>
       <p class="muted small">${planSource}</p></div>
     <div class="card activity"><h3>Activity</h3>${activity()}</div>
@@ -1322,10 +1548,18 @@ function viewOverview(){
 function savesCell(n){
   return n > 0 ? `<span class="ok">${money(n)}</span>` : n < 0 ? `<span class="bad">+${money(-n)}</span>` : '<span class="muted">—</span>';
 }
+// The answer this tab changes, kept on screen while you edit: months covered at all expenses,
+// for Current spending and for the Adjusted budget, plus what each costs per month.
+function budgetSummary(){
+  const bal = Number(state.balance)||0, c = levelTotal('current','extras'), a = levelTotal('adjusted','extras');
+  const col = (cls, label, m) => `<div class="bsum-col ${cls}"><span class="lbl">${label}</span><b>${coverage(bal, m)}<small>months</small></b><span class="muted small">${money(m)}/month</span></div>`;
+  return `${col('cur','Current spending', c)}${col('adj','Adjusted budget', a)}`;
+}
+function refreshBudgetSummary(){ const el = document.getElementById('budgetSum'); if (el) el.innerHTML = budgetSummary(); }
 function viewBudget(){
   const sections = TIERS.map(([t,tl],ti)=>{
-    const items = state.budget[t];
-    const rows = items.map((it,i)=>{
+    const items = state.budget[t], shut = !!(ui.fold && ui.fold[t]);
+    const rows = shut ? '' : items.map((it,i)=>{
       const nm = esc(it.name), own = it.adj!==null, per = it.every > 1;
       const cm = lineMonthly(it,'current'), am = lineMonthly(it,'adjusted');
       const freq = FREQS.find(f=>f[0]===it.every);
@@ -1333,23 +1567,24 @@ function viewBudget(){
         <td class="gripcell"><span class="grip" draggable="true" tabindex="0" role="button" title="Drag to reorder (or focus and use ↑ ↓)" aria-label="Reorder: use the up and down arrow keys">${ic('grip')}</span>${nudges(i, items.length)}</td>
         <td class="bn"><input type="text" data-k="${t}.${i}.name" data-act="bname" value="${nm}" aria-label="${nm} name"></td>
         <td class="bf"><span class="freq${per?' on':''}"><select data-k="${t}.${i}.every" data-act="bevery" title="How often you pay this" aria-label="${nm}: paid ${freq[2]}">${FREQS.map(([n,l])=>`<option value="${n}"${n===it.every?' selected':''}>${l}</option>`).join('')}</select>${ic('down')}</span></td>
-        <td class="num bc"><input type="number" step="0.01" data-k="${t}.${i}.cur" data-act="bcur" value="${amt(it.cur)}" aria-label="${nm}: Current">${per ? `<span class="permo">${money(cm)}/mo</span>` : ''}</td>
-        <td class="num ba"><input type="number" step="0.01"${own?' class="own"':''} data-k="${t}.${i}.adj" data-act="badj" value="${own ? amt(it.adj) : ''}" placeholder="${amt(it.cur)}" aria-label="${nm}: Adjusted${own ? '' : ', same as Current'}">${per && own ? `<span class="permo">${money(am)}/mo</span>` : ''}${cm - am > 0 ? `<span class="psaves">saves ${money(r2(cm-am))}</span>` : ''}</td>
+        <td class="num bc"><input type="text" inputmode="decimal" autocomplete="off" data-money data-k="${t}.${i}.cur" data-act="bcur" value="${mval(it.cur)}" aria-label="${nm}: Current">${per ? `<span class="permo">${money(cm)}/mo</span>` : ''}</td>
+        <td class="num ba"><input type="text" inputmode="decimal" autocomplete="off" data-money${own?' class="own"':''} data-k="${t}.${i}.adj" data-act="badj" value="${own ? mval(it.adj) : ''}" placeholder="${mval(it.cur)}" aria-label="${nm}: Adjusted${own ? '' : ', same as Current'}">${per && own ? `<span class="permo">${money(am)}/mo</span>` : ''}${cm - am > 0 ? `<span class="psaves">saves ${money(r2(cm-am)).replace(/\.00$/,'')}</span>` : ''}</td>
         <td class="num bs">${savesCell(r2(cm-am))}</td>
         <td class="bd"><button class="icon" title="Delete" aria-label="Delete ${nm}" data-act="bdel">${ic('x')}</button></td></tr>`;
     }).join('');
     const c = tierTotal('current',t), a = tierTotal('adjusted',t);
     return `<table class="bt">
-        <thead><tr><th class="bth" colspan="3"><span class="tier"><i class="swatch" style="background:var(--t${ti+1})"></i><h3>${tl}</h3></span></th><th class="num inp bc">Current</th><th class="num inp ba">Adjusted</th><th class="num bs">Saves</th><th class="bd"></th></tr></thead>
+        <thead><tr><th class="bth" colspan="3"><h3 class="tier"><button class="tierbtn" data-act="bfold" data-id="${t}" aria-expanded="${!shut}"><i class="swatch" style="background:var(--t${ti+1})"></i>${tl}<span class="muted small">${items.length} line${items.length===1?'':'s'}</span>${ic(shut ? 'right' : 'down')}</button></h3></th><th class="num inp bc">Current</th><th class="num inp ba">Adjusted</th><th class="num bs">Saves</th><th class="bd"></th></tr></thead>
         <tbody>${rows}<tr class="total"><td class="gripcell"></td><td class="bn" colspan="2">Subtotal</td><td class="num bc">${money(c)}</td><td class="num ba">${money(a)}</td><td class="num bs">${savesCell(r2(c-a))}</td><td class="bd"></td></tr></tbody></table>
-      <button class="btn addrow small" data-act="badd" data-addto="b:${t}">${ic('plus')}Add line</button>`;
+      ${shut ? '' : `<button class="btn addrow small" data-act="badd" data-addto="b:${t}">${ic('plus')}Add line</button>`}`;
   }).join('');
   const c = levelTotal('current','extras'), a = levelTotal('adjusted','extras');
   return `<div class="budget">
     <div class="panel-head"><h2>Budget</h2><span class="muted small">per month</span></div>
     <p class="muted small">Leave <b>Adjusted</b> blank to match Current, or type a lower amount for a lean emergency budget. Pick <b>/qtr</b> or <b>/yr</b> to enter a bill the way you pay it; totals are always per month. <span class="mouse-only">Drag <span class="inl">${ic('grip')}</span> (or click it and use the arrow keys)</span><span class="touch-only">Use <span class="inl">${ic('up')}${ic('down')}</span></span> to reorder.</p>
     <div class="card">${sections}
-      <table class="bt grand"><tbody><tr class="total"><td class="bn" colspan="3">Total per month</td><td class="num bc">${money(c)}</td><td class="num ba">${money(a)}</td><td class="num bs">${savesCell(r2(c-a))}</td><td class="bd"></td></tr></tbody></table></div></div>`;
+      <table class="bt grand"><tbody><tr class="total"><td class="bn" colspan="3">Total per month</td><td class="num bc">${money(c)}</td><td class="num ba">${money(a)}</td><td class="num bs">${savesCell(r2(c-a))}</td><td class="bd"></td></tr></tbody></table></div>
+    <div class="bsum" id="budgetSum" role="status" aria-label="Months covered by your savings at all expenses">${budgetSummary()}</div></div>`;
 }
 
 function chart(list){
@@ -1366,33 +1601,73 @@ function chart(list){
   const labels=months.map(m=>{const i=list.findIndex(p=>p.date.startsWith(m));return `<span style="left:${((pad+i*bw+2)/W*100).toFixed(2)}%">${new Date(m+'-15T12:00').toLocaleDateString('en-US',{month:'short'})}</span>`;}).join('');
   return `<svg viewBox="0 0 ${W} ${H-pad}" width="100%" role="img" aria-label="Bar chart of this year's paychecks">${bars}</svg>
     <div class="chart-months" aria-hidden="true">${labels}</div>
-    <div class="legend"><span><i style="background:var(--accent)"></i>Received</span><span><i style="background:var(--proj);opacity:.35"></i>Projected</span><span><i style="background:var(--marker)"></i>Needs confirming</span></div>`;
+    <div class="legend"><span><i style="background:var(--accent)"></i>Received</span><span><i style="background:var(--proj);opacity:.35"></i>Projected</span>${list.some(p=>payStatus(p)==='confirm') ? '<span><i style="background:var(--marker)"></i>Needs confirming</span>' : ''}</div>`;
+}
+
+function viewOtherIncome(){
+  const src = state.otherIncome, now = otherMonthlyNow(), yr = ui.year && otherForYear(ui.year);
+  const rows = src.map((s,i)=>{
+    const nm = esc(s.name || 'this source'), f = INC_FREQS.find(x=>x[0]===s.every), on = srcActive(s);
+    const status = on ? '' : s.start > today() ? '<span class="muted small">starts later</span>' : '<span class="muted small">ended</span>';
+    return `<tr class="${on?'':'future'}">
+      <td><input type="text" data-k="o.${s.id}.name" data-act="oname" data-i="${i}" value="${esc(s.name)}" placeholder="e.g. Side gig" aria-label="Income source name"></td>
+      <td class="num"><input type="text" inputmode="decimal" autocomplete="off" data-money data-k="o.${s.id}.amt" data-act="oamt" data-i="${i}" value="${mval(s.amount)}" aria-label="${nm}: take-home amount"></td>
+      <td><span class="freq${s.every!=='month'?' on':''}"><select data-k="o.${s.id}.every" data-act="oevery" data-i="${i}" title="How often it arrives" aria-label="${nm}: arrives ${f[2]}">${INC_FREQS.map(([k,l])=>`<option value="${k}"${k===s.every?' selected':''}>${l}</option>`).join('')}</select>${ic('down')}</span></td>
+      <td><input type="date" data-k="o.${s.id}.start" data-act="ostart" data-i="${i}" value="${esc(s.start)}" aria-label="${nm}: start date"></td>
+      <td><input type="date" data-k="o.${s.id}.end" data-act="oend" data-i="${i}" value="${esc(s.end||'')}" min="${esc(s.start)}" aria-label="${nm}: end date (leave empty if ongoing)"></td>
+      <td class="num">${money(r2(srcYearly(s)/12))}${status ? '<br>'+status : ''}</td>
+      <td><button class="icon" title="Delete" aria-label="Delete ${nm}" data-act="odel" data-i="${i}">${ic('x')}</button></td></tr>`;
+  }).join('');
+  const add = `<div class="row addrow"><button class="btn" data-act="oadd">${ic('plus')}Add income source</button></div>`;
+  return `
+  <div class="card other">
+    <h2>Other income</h2>
+    ${src.length ? `<div class="strip">
+      <div class="stat"><span class="lbl">Adding each month now</span><b>${money(now)}</b></div>
+      ${yr !== null && yr !== undefined && yr !== '' ? `<div class="stat"><span class="lbl">Counted for ${esc(ui.year)}</span><b>${money(yr)}</b><span class="muted small">only while active</span></div>` : ''}
+    </div>
+    ${hscroll('oinc', `<table><thead><tr><th>Source</th><th class="num inp">Take-home</th><th>How often</th><th>Starts</th><th>Ends</th><th class="num">Per month</th><th></th></tr></thead><tbody>${rows}</tbody></table>`)}`
+    : '<p class="muted">Side gigs, rent from a roommate, benefits: anything that comes in besides your paychecks.</p>'}
+    ${add}
+    <p class="muted small">Enter what you actually keep after tax. Leave <b>Ends</b> empty if it's ongoing. Other income is added on the Income tab, to each year it was active and to your monthly discretionary.</p>
+  </div>`;
 }
 
 function viewPaychecks(){
   const years = Object.keys(state.paychecks).sort();
   const addBtns = `<div class="row addrow"><button class="btn" data-act="padd">${ic('plus')}Add paycheck</button><button class="btn" data-act="pfill">Fill the year…</button></div>`;
-  if (!years.length) return `<h2>Paychecks</h2><div class="card"><p class="muted">No paychecks yet. Add one, or fill a whole year on your pay schedule.</p>${addBtns}</div>`;
+  if (!years.length) return `<h2>Paychecks</h2><div class="card"><p class="muted">No paychecks yet. Add one, or fill a whole year on your pay schedule.</p>${addBtns}</div>${viewOtherIncome()}`;
   if (!years.includes(ui.year)) ui.year = years[years.length-1]; // show the latest year if the saved one is gone
   const y = ui.year, list = state.paychecks[y], t = yearTotals(y), vsPlan = r2(t.expected - t.precalc);
   const seg = `<div class="seg">${years.map(k=>`<button class="${k===y?'on':''}" data-year="${esc(k)}" aria-pressed="${k===y}">${esc(k)}</button>`).join('')}</div>`;
+  // Received paychecks before the first open one fold away (the latest two stay for context),
+  // so the paycheck that needs you sits near the top instead of a year down the list.
+  const firstOpen = list.findIndex(p=>payStatus(p)!=='received'), folded = !ui.payAll && firstOpen > 3 ? firstOpen - 2 : 0;
+  const foldRow = firstOpen > 3 ? `<tr class="fold"><td colspan="7"><button class="link small" data-act="payall">${ui.payAll ? 'Hide earlier paychecks' : `Show ${folded} earlier paycheck${folded>1?'s':''}`}</button></td></tr>` : '';
+  // The oldest paycheck waiting for "Got it", in any year, gets a band at the top with its own button.
+  const pend = pendingPays(), first = pend[0];
+  const needBand = first ? `<div class="remind needpay" role="status"><i class="rdot" aria-hidden="true"></i>
+    <p><b>${pend.length === 1 ? '1 paycheck' : pend.length+' paychecks'} to confirm.</b> Did the ${esc(niceDate(first.p.date))} paycheck arrive as planned?</p>
+    <span class="row"><button class="btn small primary" data-act="pgot" data-y="${esc(first.y)}" data-i="${first.i}">${ic('check')}Got it · ${money(first.p.projected)}</button><button class="link small" data-act="pjump" data-y="${esc(first.y)}" data-i="${first.i}">It was a different amount</button></span></div>` : '';
   const rows = list.map((p,i)=>{
+    if (i < folded) return '';
     const s = payStatus(p);
     const pill = s==='received' ? `<span class="mark got">${ic('check')}Received</span>`
       : s==='confirm' ? `<button class="mark need" data-act="pgot" data-i="${i}" title="Mark received at the projected ${money(p.projected)}" aria-label="Got it: mark the ${esc(niceDate(p.date))} paycheck received at ${money(p.projected)}">${ic('check')}Got it</button>`
       : '<span class="mark proj">Projected</span>';
     const diff = s==='received' ? r2(p.actual - p.projected) : null;
-    return `<tr class="${s==='projected'?'future':''}">
-      <td><input type="date" data-k="p.${i}.date" data-act="pdate" data-i="${i}" value="${esc(p.date)}" aria-label="Pay date"></td>
-      <td>${pill}</td>
-      <td class="num"><input type="number" step="0.01" placeholder="${s==='projected'?'—':'amount'}" data-k="p.${i}.actual" data-act="pactual" data-i="${i}" value="${amt(p.actual)}" aria-label="Actual amount for ${esc(niceDate(p.date))}"></td>
-      <td class="num"><input type="number" step="0.01" data-k="p.${i}.proj" data-act="pproj" data-i="${i}" value="${amt(p.projected)}" aria-label="Projected amount for ${esc(niceDate(p.date))}"></td>
-      <td class="num ${diff>0?'ok':diff<0?'bad':''}">${diff===null?'':(diff>0?'+':'')+money(diff)}</td>
-      <td><input type="text" data-k="p.${i}.note" data-act="pnote" data-i="${i}" value="${esc(p.note)}" placeholder="note" aria-label="Note for ${esc(niceDate(p.date))}"></td>
-      <td><button class="icon" title="Delete" aria-label="Delete the ${esc(niceDate(p.date))} paycheck" data-act="pdel" data-i="${i}">${ic('x')}</button></td></tr>`;
+    return `<tr class="${s==='projected'?'future':''}${p.note ? ' hasnote' : ''}">
+      <td class="pd"><input type="date" data-k="p.${i}.date" data-act="pdate" data-i="${i}" value="${esc(p.date)}" aria-label="Pay date"></td>
+      <td class="ps">${pill}</td>
+      <td class="num pa" data-l="Actual"><input type="text" inputmode="decimal" autocomplete="off" data-money placeholder="${s==='projected'?'—':'amount'}" data-k="p.${i}.actual" data-act="pactual" data-i="${i}" value="${mval(p.actual)}" aria-label="Actual amount for ${esc(niceDate(p.date))}"></td>
+      <td class="num pp" data-l="Projected"><input type="text" inputmode="decimal" autocomplete="off" data-money data-k="p.${i}.proj" data-act="pproj" data-i="${i}" value="${mval(p.projected)}" aria-label="Projected amount for ${esc(niceDate(p.date))}"></td>
+      <td class="num pf ${diff>0?'ok':diff<0?'bad':''}" data-l="Diff">${diff===null?'':(diff>0?'+':'')+money(diff)}</td>
+      <td class="pn"><input type="text" data-k="p.${i}.note" data-act="pnote" data-i="${i}" value="${esc(p.note)}" placeholder="note" aria-label="Note for ${esc(niceDate(p.date))}"></td>
+      <td class="px"><button class="icon notebtn" title="Add a note" aria-label="${p.note ? 'Show' : 'Add'} the note for the ${esc(niceDate(p.date))} paycheck" aria-expanded="false" data-act="pnoteopen">${ic('note')}</button><button class="icon" title="Delete" aria-label="Delete the ${esc(niceDate(p.date))} paycheck" data-act="pdel" data-i="${i}">${ic('x')}</button></td></tr>`;
   }).join('');
   return `
   <div class="row" style="margin-bottom:14px"><h2 style="margin:0">Paychecks</h2><span class="spacer"></span>${seg}</div>
+  ${needBand}
   <div class="strip">
     <div class="stat"><span class="lbl">Received so far (${t.receivedCount} of ${t.count})</span><b>${money(t.received)}</b></div>
     <div class="stat"><span class="lbl">On track for ${esc(y)}</span><b>${money(t.expected)}</b><span class="muted small">received + still to come</span></div>
@@ -1400,20 +1675,20 @@ function viewPaychecks(){
   </div>
   <div class="card" style="margin-bottom:14px">${chart(list)}</div>
   <div class="card">
-    ${hscroll('pay', `<table><thead><tr><th>Pay date</th><th>Status</th><th class="num inp">Actual</th><th class="num inp">Projected</th><th class="num">Diff</th><th>Note</th><th></th></tr></thead>
-    <tbody>${rows}</tbody></table>`)}
+    ${hscroll('pay', `<table class="pt"><thead><tr><th>Pay date</th><th>Status</th><th class="num inp">Actual</th><th class="num inp">Projected</th><th class="num">Diff</th><th>Note</th><th></th></tr></thead>
+    <tbody>${foldRow}${rows}</tbody></table>`)}
     ${addBtns}
-    <p class="muted small">Paychecks dated after today are projected. Once the date passes, tap <b>Got it</b> if it matched, or type the actual amount.</p>
-  </div>`;
+    <p class="muted small">Paychecks dated after today are projected. Once the date passes, <span class="mouse-only">click</span><span class="touch-only">tap</span> <b>Got it</b> if it matched, or type the actual amount.</p>
+  </div>${viewOtherIncome()}`;
 }
 
 function viewIncome(){
   const {years, lines} = state.income;
   const exp = r2(levelTotal('current','extras')*12);
   const cols = years.map((y,yi)=>{
-    const net = netPay(y), disc = r2(net-exp);
+    const net = netPay(y), other = otherForYear(y.label), disc = r2(net + (other||0) - exp);
     const disp = r2(disc + sum(lines.map(l=>(l.sign<0?-1:1)*(Number(l.amounts[y.id])||0))));
-    return {y,yi,net,disc,disp};
+    return {y,yi,net,other,disc,disp};
   });
   const narrow = window.innerWidth <= 480;
   if (!(ui.incCol >= 0 && ui.incCol < cols.length)) ui.incCol = Math.max(0, cols.findIndex(c=>c.y.label===String(new Date().getFullYear())));
@@ -1429,7 +1704,7 @@ function viewIncome(){
     const hint = auto===null ? '<div class="muted small">typed in</div>'
       : over ? `<button class="link small" data-act="inetreset" data-i="${c.yi}">Use Paychecks (${money(auto)})</button>`
       : '<div class="muted small">from Paychecks</div>';
-    return `<input type="number" step="0.01" data-k="net.${esc(c.y.id)}" data-act="inet" data-i="${c.yi}" value="${amt(c.net)}" aria-label="Net pay ${esc(c.y.label)}">${hint}`;
+    return `<input type="text" inputmode="decimal" autocomplete="off" data-money data-k="net.${esc(c.y.id)}" data-act="inet" data-i="${c.yi}" value="${mval(c.net)}" aria-label="Net pay ${esc(c.y.label)}">${hint}`;
   };
   const row = (label,f,cls='') => `<tr class="${cls}"><td>${label}</td>${shownCols.map(c=>`<td class="num" ${colAttrs(c)}>${f(c)}</td>`).join('')}<td></td></tr>`;
   const head = shownCols.map(c=>`<th class="num" ${colAttrs(c)}><div class="row" style="flex-wrap:nowrap;gap:2px;justify-content:flex-end">
@@ -1440,12 +1715,13 @@ function viewIncome(){
       <td><div class="row" style="flex-wrap:nowrap;gap:6px"><span class="grip" draggable="true" tabindex="0" role="button" title="Drag to reorder (or focus and use ↑ ↓)" aria-label="Reorder: use the up and down arrow keys">${ic('grip')}</span>${nudges(li, lines.length)}
         <button class="sign ${l.sign<0?'minus':'plus'}" data-act="lsign" data-i="${li}" aria-label="${esc(l.name)}: ${l.sign<0?'subtracted from':'added to'} Disposable. Activate to switch." title="${l.sign<0?'Subtracted from':'Added to'} Disposable. Click to switch.">${ic(l.sign<0?'minus':'plus')}</button>
         <input type="text" data-k="lname.${esc(l.id)}" data-act="lname" data-i="${li}" value="${esc(l.name)}" aria-label="Line name"></div></td>
-      ${shownCols.map(c=>`<td class="num" ${colAttrs(c)}><input type="number" step="0.01" data-k="lamt.${esc(l.id)}.${esc(c.y.id)}" data-act="lamt" data-i="${li}" data-y="${esc(c.y.id)}" value="${amt(Number(l.amounts[c.y.id])||0)}" aria-label="${esc(l.name)} ${esc(c.y.label)}"></td>`).join('')}
+      ${shownCols.map(c=>`<td class="num" ${colAttrs(c)}><input type="text" inputmode="decimal" autocomplete="off" data-money data-k="lamt.${esc(l.id)}.${esc(c.y.id)}" data-act="lamt" data-i="${li}" data-y="${esc(c.y.id)}" value="${mval(Number(l.amounts[c.y.id])||0)}" aria-label="${esc(l.name)} ${esc(c.y.label)}"></td>`).join('')}
       <td><button class="icon" title="Delete this line" aria-label="Delete ${esc(l.name)}" data-act="ldel" data-i="${li}">${ic('x')}</button></td></tr>`).join('');
   const snapshot = !years.length
     ? `<p class="muted">No years yet. <button class="btn small" data-act="yadd">${ic('plus')}Add year</button></p>`
     : `<table class="inc${narrow?' one':''}">${narrow ? '' : `<thead><tr><th></th>${head}<th><button class="btn small" data-act="yadd" title="Add a year column">${ic('plus')}Year</button></th></tr></thead>`}<tbody>
       ${row('Net pay',netCell)}
+      ${state.otherIncome.length ? row('Other income <span class="muted small">(Paychecks tab)</span>',c=>c.other===null ? '<span class="muted small" title="Name the column as a year, like 2026, to count other income">—</span>' : '+'+money(c.other)) : ''}
       ${row('Expenses (Current, all expenses × 12)',c=>'−'+money(exp))}
       ${row('<b>Discretionary</b>',c=>`<b>${money(c.disc)}</b>`)}
       ${lineRows}
@@ -1454,19 +1730,22 @@ function viewIncome(){
       ${row('Disposable',c=>`<span class="${c.disp<0?'bad':''}">${money(c.disp)}</span>`,'total')}
     </tbody></table>`;
   const monthlyBudget = levelTotal('current','extras');
-  const monthlyIncome = r2((Number(state.typicalPaycheck)||0)*2);
-  const monthlyDisc = r2(monthlyIncome - monthlyBudget);
+  const monthlyPay = monthlyIncome(), every = payEvery(), perMonth = PAY_PER_MONTH[every];
+  const monthlyOther = otherMonthlyNow(), monthlyDisc = monthlyDiscretionary();
   return `
+  <h2 class="pagehead">Income</h2>
   <div class="card" style="margin-bottom:14px">
-    <h2>Yearly income snapshot</h2>
+    <h3 class="ch">Yearly income snapshot</h3>
     ${pager}${narrow ? snapshot : hscroll('inc', snapshot)}
-    <p class="muted small">Disposable assumes no large unexpected expenses. <span class="mouse-only">Drag <span class="inl">${ic('grip')}</span> (or click it and use the arrow keys)</span><span class="touch-only">${narrow ? `Use <span class="inl">${ic('left')}${ic('right')}</span> to switch years and <span class="inl">${ic('up')}${ic('down')}</span> to move a line` : `Use <span class="inl">${ic('left')}${ic('right')}</span> and <span class="inl">${ic('up')}${ic('down')}</span> to move a year or a line`}</span><span class="mouse-only"> to move a year or a line</span>. If a year's label matches a year on the Paychecks tab, its net pay comes from there (received + projected), and you can type over it.</p>
+    <p class="muted small">Disposable assumes no large unexpected expenses. <span class="mouse-only">Drag <span class="inl">${ic('grip')}</span> (or click it and use the arrow keys)</span><span class="touch-only">${narrow ? `Use <span class="inl">${ic('left')}${ic('right')}</span> to switch years and <span class="inl">${ic('up')}${ic('down')}</span> to move a line` : `Use <span class="inl">${ic('left')}${ic('right')}</span> and <span class="inl">${ic('up')}${ic('down')}</span> to move a year or a line`}</span><span class="mouse-only"> to move a year or a line</span>. If a year's label matches a year on the Paychecks tab, its net pay comes from there (received + projected), and you can type over it.${state.otherIncome.length ? ' Other income counts only the part of each year a source was active.' : ''}</p>
   </div>
   <div class="card" style="max-width:520px">
-    <h2>Monthly discretionary</h2>
-    <table><tbody>
-      <tr><td>Typical paycheck</td><td class="num"><input type="number" step="0.01" data-k="typ" data-act="typ" value="${amt(state.typicalPaycheck)}" aria-label="Typical paycheck"></td></tr>
-      <tr><td>Approx. Monthly Income</td><td class="num">${money(monthlyIncome)}</td></tr>
+    <h3 class="ch">Monthly discretionary</h3>
+    <table class="mt"><tbody>
+      <tr><td>Typical paycheck</td><td class="num"><input type="text" inputmode="decimal" autocomplete="off" data-money data-k="typ" data-act="typ" value="${mval(state.typicalPaycheck)}" aria-label="Typical paycheck"></td></tr>
+      <tr><td>How often you're paid${state.payEvery ? '' : ' <span class="muted small">(from your pay dates)</span>'}</td><td class="num"><span class="freq"><select data-k="payevery" data-act="payevery" aria-label="How often you're paid">${PAY_FREQS.map(([k,l])=>`<option value="${k}"${k===every?' selected':''}>${l.replace(/ \(.*\)$/,'')}</option>`).join('')}</select>${ic('down')}</span></td></tr>
+      <tr><td>Approx. monthly income <span class="muted small">(${Number.isInteger(perMonth) ? perMonth : perMonth.toFixed(2)} paychecks a month)</span></td><td class="num">${money(monthlyPay)}</td></tr>
+      ${state.otherIncome.length ? `<tr><td>Other income <span class="muted small">(active now)</span></td><td class="num">+${money(monthlyOther)}</td></tr>` : ''}
       <tr><td>Expenses (Current budget, all expenses)</td><td class="num">−${money(monthlyBudget)}</td></tr>
       <tr class="total"><td>Discretionary per month</td><td class="num ${monthlyDisc<0?'bad':''}">${money(monthlyDisc)}</td></tr>
     </tbody></table>
@@ -1487,34 +1766,88 @@ function viewSettings(){
     <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
     <h3>Start over</h3>
     <p class="muted small">This clears everything and starts over with a blank slate.</p>
+    <div class="row dangerrow">
     <button class="btn danger" data-act="reset">Clear all data</button>
+    </div>
   </div>
   <div class="card">
     <h2>Notes</h2>
     <textarea data-k="notes" data-act="notes" aria-label="Notes">${esc(state.notes)}</textarea>
-  </div></div>`;
+  </div>${trashCard()}</div>`;
+}
+// Recently deleted: newest first, each with Restore (which can itself be undone).
+function trashCard(){
+  if (!state.trash.length) return '';
+  return `<div class="card trash"><h2>Recently deleted</h2>
+    <p class="muted small">Budget lines, paychecks, money entries and income sources you delete wait here for ${TRASH_DAYS} days.</p>
+    <table class="trasht"><tbody>${[...state.trash].reverse().map(x=>`<tr><td>${esc((x.label || 'item').replace(/^./, c=>c.toUpperCase()))}<span class="muted small">Deleted ${niceDate(x.at)}</span></td>
+      <td class="tr"><button class="btn small" data-act="restore" data-id="${esc(x.id)}" aria-label="Restore ${esc(x.label)}">Restore</button></td></tr>`).join('')}</tbody></table></div>`;
 }
 
 /* ---------- undo bar and sheets ---------- */
-// The undo bar says what just happened; if the change can be taken back it holds a copy of
-// the data from just before, and Undo puts that copy back. A newer message replaces it.
-let undoCopy = null, toastTimer = 0;
+// The undo bar says what just happened. Each change that can be taken back keeps a copy of the
+// data from just before it; Undo (or Cmd/Ctrl+Z) puts the latest copy back, then the one before.
+// The copies outlast the bar fading, until an edit that can't be undone makes them unsafe.
+let undoStack = [], toastTimer = 0, keyboardUsed = false;
+const UNDO_MAX = 10;
 const toastEl = document.getElementById('toast');
-function toast(msg, copy=null){
-  undoCopy = copy;
-  toastEl.innerHTML = `<span>${esc(msg)}</span>${copy ? '<button class="undo" data-act="undo">Undo</button>' : ''}<button class="icon" data-act="toastx" aria-label="Dismiss">${ic('x')}</button>`;
+document.addEventListener('keydown', e=>{ if (['Tab','Enter',' '].includes(e.key)) keyboardUsed = true; }, true);
+document.addEventListener('pointerdown', ()=>{ keyboardUsed = false; }, true);
+function showToast(msg, canUndo){
+  toastEl.innerHTML = `<span>${esc(msg)}</span>${canUndo ? '<button class="undo" data-act="undo">Undo</button>' : ''}<button class="icon" data-act="toastx" aria-label="Dismiss">${ic('x')}</button>`;
   toastEl.classList.add('show');
   holdToast(false);
 }
-function hideToast(){ clearTimeout(toastTimer); toastEl.classList.remove('show'); undoCopy = null; }
+// back: the focus key of the control that made the change, so Undo can return focus there.
+function toast(msg, copy=null, back=null){
+  if (copy){ undoStack.push({msg, copy, back}); if (undoStack.length > UNDO_MAX) undoStack.shift(); }
+  showToast(msg, !!copy);
+}
+// Hides the bar. An edit (clear) also drops the undo copies; the bar fading or ✕ keeps them.
+function hideToast(clear=true){ clearTimeout(toastTimer); toastEl.classList.remove('show'); if (clear) undoStack = []; }
 // Stays while the pointer or keyboard focus is on it; otherwise fades after a few seconds.
-function holdToast(hold){ clearTimeout(toastTimer); if (!hold) toastTimer = setTimeout(hideToast, undoCopy ? 7000 : 4000); }
+function holdToast(hold){ clearTimeout(toastTimer); if (!hold) toastTimer = setTimeout(()=>hideToast(false), toastEl.querySelector('.undo') ? 10000 : 4000); }
 toastEl.addEventListener('pointerenter', ()=>holdToast(true));
 toastEl.addEventListener('pointerleave', ()=>holdToast(false));
 toastEl.addEventListener('focusin', ()=>holdToast(true));
 toastEl.addEventListener('focusout', ()=>holdToast(false));
 // Make a change that can be undone: keep a copy of the data, change it, save, and say what happened.
-function undoable(msg, change){ const copy = clone(state); change(); commit(); toast(msg, copy); }
+// Earlier copies stay underneath it. With the keyboard, focus lands on Undo, one key away.
+function undoable(msg, change){
+  const copy = clone(state), keep = undoStack, back = focusKey(document.activeElement);
+  change(); commit(); undoStack = keep; toast(msg, copy, back);
+  if (keyboardUsed){ const u = toastEl.querySelector('.undo'); if (u) u.focus({preventScroll:true}); }
+}
+function undo(){
+  const last = undoStack.pop(); if (!last) return;
+  state = last.copy; celebrate = null; save(); render();
+  const next = undoStack[undoStack.length - 1];
+  showToast(next ? `Undone. Undo again to take back: ${next.msg}` : 'Undone', !!next);
+  const el = last.back && [...document.querySelectorAll('input,button,textarea,select,.grip,.fhandle')].find(x=>focusKey(x)===last.back);
+  if (el) el.focus({preventScroll:true});
+}
+// Cmd/Ctrl+Z outside a text box (a box keeps its own typing undo).
+document.addEventListener('keydown', e=>{
+  if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey || e.key.toLowerCase()!=='z' || !undoStack.length || sheet.open) return;
+  if (e.target.matches && e.target.matches('input:not([type=range]),textarea,select')) return;
+  e.preventDefault(); undo();
+});
+// Deleted things wait in Recently deleted (Backup & Notes) for a month.
+function trashPut(kind, label, item, extra={}){
+  state.trash.push({id:uid(), kind, at:today(), label, item:clone(item), ...extra});
+  if (state.trash.length > TRASH_MAX) state.trash.shift();
+}
+function restoreTrash(id){
+  const k = state.trash.findIndex(x=>x.id===id); if (k < 0) return;
+  const x = state.trash[k];
+  undoable(`Restored ${x.label}`, ()=>{
+    state.trash.splice(k, 1);
+    if (x.kind==='bline'){ const list = state.budget[x.t]; list.splice(Math.min(x.i, list.length), 0, x.item); }
+    else if (x.kind==='pay'){ (state.paychecks[x.item.date.slice(0,4)] ||= []).push(x.item); fileOrMove(); }
+    else if (x.kind==='log') logEntry(x.item);
+    else state.otherIncome.push(x.item);
+  });
+}
 
 // A small in-app dialog. Resolves with the value of the button that submitted it, or '' for
 // Cancel, Esc or a tap outside. Buttons marked data-close cancel without submitting the form.
@@ -1586,9 +1919,9 @@ function openFill(){
   const html = `<h2 id="sheetTitle">Fill the year</h2>
     <p class="muted small">Adds projected paychecks through December 31. Dates you already have are skipped.</p>
     <label class="field"><span class="lbl">Year</span><select name="year">${years.map(y=>`<option${y===pick?' selected':''}>${y}</option>`).join('')}</select></label>
-    <label class="field"><span class="lbl">How often you're paid</span><select name="freq">${PAY_FREQS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select></label>
+    <label class="field"><span class="lbl">How often you're paid</span><select name="freq">${PAY_FREQS.map(([k,l])=>`<option value="${k}"${k===payEvery()?' selected':''}>${l}</option>`).join('')}</select></label>
     <label class="field"><span class="lbl">First pay date</span><input name="first" type="date"></label>
-    <label class="field"><span class="lbl">Amount each time</span><input name="amount" type="number" step="0.01" inputmode="decimal" value="${amt(amount)}"></label>
+    <label class="field"><span class="lbl">Amount each time</span><input name="amount" type="text" inputmode="decimal" autocomplete="off" data-money inputmode="decimal" value="${mval(amount)}"></label>
     <p class="preview" aria-live="polite"></p>
     <div class="actions"><button type="button" class="btn" data-close>Cancel</button><button class="btn primary" value="ok">Add paychecks</button></div>`;
   let plan = [];
@@ -1609,8 +1942,9 @@ function openFill(){
     update();
   }).then(v=>{
     if (v!=='ok' || !plan.length) return;
-    const f = sheet.querySelector('form'), year = f.year.value, each = r2(f.amount.value);
+    const f = sheet.querySelector('form'), year = f.year.value, each = parseAmount(f.amount.value), freq = f.freq.value;
     undoable(`Added ${plan.length} paycheck${plan.length>1?'s':''} to ${year}`, ()=>{
+      state.payEvery = freq; // the Income tab's monthly income follows the schedule you fill
       const list = (state.paychecks[year] ||= []);
       plan.forEach(date=>list.push({date, actual:null, projected:each, note:''}));
       ui.year = year; saveUI(); fileOrMove();
@@ -1620,40 +1954,50 @@ function openFill(){
 
 /* ---------- first-run setup (a brand-new copy: shared and web versions) ---------- */
 function setupCurrency(){
-  return `<div class="field"><span class="lbl">Your currency</span><div class="row setcur">${CURRENCIES.map(([code,sym,name])=>
-    `<button type="button" class="curbtn${code===currencyCode()?' on':''}" data-setcur="${code}" title="${name}" aria-label="${name}" aria-pressed="${code===currencyCode()}">${sym}</button>`).join('')}</div></div>`; } // web build: the currency choice on the first step
+  return `<div class="chips" role="radiogroup" aria-label="Currency">${CURRENCIES.map(([code,sym,name])=>
+    `<button type="button" role="radio" class="chip${code===currencyCode()?' on':''}" aria-checked="${code===currencyCode()}" data-setcur="${code}"><b>${sym} ${code}</b><span>${name}</span></button>`).join('')}</div>
+    <p class="muted small">This only changes the symbol shown. It never converts amounts.</p>`; } // web build: the currency choice on the first step
 function openSetup(){
+  // A currency step comes first only where there is a currency to pick (the web app); then balance, costs, finish line.
+  const pickCur = !!setupCurrency(), steps = [...(pickCur ? ['currency'] : []), 'balance', 'costs', 'goal'];
   let step = 0;
-  const ess = state.budget.necessities, vals = {bal:'', costs: ess.map(()=>''), target:6, custom:''};
-  const sym = () => money(0).replace(/[0-9.,\s-]/g,'') || '$';
+  const ess = state.budget.necessities, vals = {bal:'', costs: ess.map(()=>''), target:6, custom:'', more:false};
+  // Ask for the main costs first: housing, groceries and insurance (or the first three lines); the rest sit behind "More costs".
+  let core = ess.map((it,i)=>/housing|rent|mortgage|grocer|insur/i.test(it.name) ? i : -1).filter(i=>i>=0).slice(0,3);
+  if (core.length < 3) core = ess.map((_,i)=>i).slice(0,3);
+  const sym = currencySymbol, last = steps.length - 1;
   const total = () => sum(vals.costs.map(v=>Math.max(0, parseAmount(v))));
-  const dots = () => `<p class="steps"><span class="sr-only">Step ${step+1} of 3</span>${[0,1,2].map(i=>`<i class="${i<=step?'on':''}" aria-hidden="true"></i>`).join('')}</p>`;
+  const dots = () => `<p class="steps"><span class="sr-only">Step ${step+1} of ${steps.length}</span>${steps.map((_,i)=>`<i class="${i<=step?'on':''}" aria-hidden="true"></i>`).join('')}</p>`;
   const bigInput = (name, v) => `<span class="bigamt"><span aria-hidden="true">${esc(sym())}</span><input name="${name}" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" value="${esc(v)}"></span>`;
-  const views = [
-    ()=>`${dots()}<h2 id="sheetTitle">Let's map your climb</h2>
-      <p class="muted">Three quick questions, then you'll see how many months your emergency fund covers. Everything stays on this device.</p>
-      ${setupCurrency()}
-      <label class="field"><span class="lbl">How much is in your emergency fund right now?</span>${bigInput('bal', vals.bal)}</label>`,
-    ()=>`${dots()}<h2 id="sheetTitle">What does a month cost?</h2>
-      <p class="muted">Start with the essentials. You can fine-tune everything on the Budget tab later.</p>
-      <div class="scosts">${ess.map((it,i)=>`<label class="srow"><span>${esc(it.name)}</span><input name="c${i}" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" value="${esc(vals.costs[i])}"></label>`).join('')}</div>
-      <p class="preview">Essentials: <b class="stotal">${money(total())}</b> a month</p>`,
-    ()=>{ const m = total();
+  const intro = `<p class="muted">A few quick questions, then you'll see how many months your emergency fund covers. Everything stays on this device.</p>`;
+  const views = {
+    currency: ()=>`${dots()}<h2 id="sheetTitle">Let's map your climb</h2>${intro}${setupCurrency()}`,
+    balance: ()=>`${dots()}<h2 id="sheetTitle">${step ? "What's in your emergency fund?" : "Let's map your climb"}</h2>${step ? '' : intro}
+      <label class="field"><span class="lbl">How much have you saved for emergencies so far?</span>${bigInput('bal', vals.bal)}</label>
+      <p class="muted small">An estimate is fine. You can update it any time.</p>`,
+    costs: ()=>{ const shown = ess.map((_,i)=>i).filter(i=>vals.more || core.includes(i)), hidden = ess.length - shown.length;
+      return `${dots()}<h2 id="sheetTitle">What does a month cost?</h2>
+      <p class="muted">Start with the big ones. Leave anything blank to fill in later on the Budget tab.</p>
+      <div class="scosts">${shown.map(i=>`<label class="srow"><span>${esc(ess[i].name)}</span><input name="c${i}" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" value="${esc(vals.costs[i])}"></label>`).join('')}</div>
+      ${hidden ? `<button type="button" class="link" data-more>More costs (${hidden})</button>` : ''}
+      <p class="preview">So far: <b class="stotal">${money(total())}</b> a month</p>`; },
+    goal: ()=>{ const m = total();
       return `${dots()}<h2 id="sheetTitle">Pick your finish line</h2>
       <p class="muted">Many people aim for 3 to 6 months of expenses. You can change it any time.</p>
       <div class="chips" role="radiogroup" aria-label="Savings target">${[...TARGETS.map(([n,l])=>[n, l, m > 0 ? money(r2(m*n)) : '']), ['custom','Custom','an amount']].map(([n,l,sub])=>
         `<button type="button" role="radio" class="chip${vals.target===n?' on':''}" aria-checked="${vals.target===n}" data-n="${n}"><b>${l}</b>${sub ? `<span>${sub}</span>` : ''}</button>`).join('')}</div>
       ${vals.target==='custom' ? `<label class="field"><span class="lbl">Your goal</span>${bigInput('custom', vals.custom)}</label>` : ''}`; },
-  ];
-  const nav = () => `<div class="actions"><button type="button" class="link" data-skip>Skip setup</button>${step ? '<button type="button" class="btn" data-back>Back</button>' : ''}<button type="button" class="btn primary" data-next>${step < 2 ? 'Next' : 'See my climb'}</button></div>`;
+  };
+  const nav = () => `<div class="actions"><button type="button" class="link" data-skip>Skip setup</button>${step ? '<button type="button" class="btn" data-back>Back</button>' : ''}<button type="button" class="btn primary" data-next>${step < last ? 'Next' : 'See my climb'}</button></div>`;
   openSheet('', sh=>{
     const f = sh.querySelector('form');
     const read = ()=>{ if (f.bal) vals.bal = f.bal.value; ess.forEach((_,i)=>{ if (f['c'+i]) vals.costs[i] = f['c'+i].value; }); if (f.custom) vals.custom = f.custom.value; };
-    const show = ()=>{ f.innerHTML = views[step]() + nav(); const box = f.querySelector('input[name=bal],input[name=custom]'); if (box) box.focus(); };
+    const show = ()=>{ f.innerHTML = views[steps[step]]() + nav(); const box = f.querySelector('input[name=bal],input[name=custom],input[name=c'+core[0]+']'); if (box) box.focus(); };
     const finish = ()=>{
       const bal = Math.max(0, parseAmount(vals.bal));
       if (bal) logEntry({date:today(), delta:bal, note:'Starting balance', kind:'start'});
       ess.forEach((it,i)=>{ const v = parseAmount(vals.costs[i]); if (v > 0) it.cur = v; });
+      state.budgetDraft = ess.some(it=>it.cur > 0); // only a few costs so far: Overview says so until you edit the Budget
       if (vals.target==='custom'){ const v = parseAmount(vals.custom); if (v > 0) state.target = {mode:'dollars', value:v}; }
       else state.target = {mode:'months', value:vals.target};
       closeSheet('done');
@@ -1665,9 +2009,10 @@ function openSetup(){
       read();
       if (b.dataset.setcur){ state.currency = b.dataset.setcur; show(); }
       else if (b.dataset.n){ vals.target = b.dataset.n==='custom' ? 'custom' : Number(b.dataset.n); show(); }
+      else if ('more' in b.dataset){ vals.more = true; show(); const first = f.querySelector('input[name=c'+ess.findIndex((_,i)=>!core.includes(i))+']'); if (first) first.focus(); }
       else if ('skip' in b.dataset) closeSheet('');
       else if ('back' in b.dataset){ step--; show(); }
-      else if ('next' in b.dataset){ if (step < 2){ step++; show(); } else finish(); }
+      else if ('next' in b.dataset){ if (step < last){ step++; show(); } else finish(); }
     });
     show();
   }).then(()=>{ ui.setupDone = true; saveUI(); commit(); }); // finished or skipped, it doesn't come back
@@ -1688,12 +2033,16 @@ function openMoney(kind){
     const f = sh.querySelector('form'), out = sh.querySelector('.preview'), ok = f.querySelector('[value=ok]');
     const update = ()=>{
       amount = Math.abs(parseAmount(f.amount.value));
-      const nb = r2(state.balance + (add ? amount : -amount));
-      ok.disabled = !(amount > 0) || !isISODate(f.date.value);
-      ok.textContent = amount > 0 ? `${verb} ${money(amount)}` : verb;
-      out.innerHTML = amount > 0 ? `New balance <b>${money(nb)}</b>${cur > 0 ? ` · ${coverage(nb, cur)} months covered` : ''}` : `Balance now ${money(state.balance)}`;
+      const nb = r2(state.balance + (add ? amount : -amount)), over = !add && nb < 0;
+      ok.disabled = !(amount > 0) || !isISODate(f.date.value) || over;
+      ok.textContent = amount > 0 && !over ? `${verb} ${money(amount)}` : verb;
+      // More than the fund holds can't come out of it: offer the whole balance instead, or a fix for a stale balance.
+      out.classList.toggle('warn', over);
+      out.innerHTML = over ? `That's more than the <b>${money(state.balance)}</b> in your fund. If your balance is out of date, update it first.${state.balance > 0 ? ` <button type="button" class="link" data-all>Take out all ${money(state.balance)}</button>` : ''}`
+        : amount > 0 ? `New balance <b>${money(nb)}</b>${cur > 0 ? ` · ${coverage(nb, cur)} months covered` : ''}` : `Balance now ${money(state.balance)}`;
     };
     f.addEventListener('input', update); f.addEventListener('change', update); update();
+    out.addEventListener('click', e=>{ if (e.target.closest('[data-all]')){ f.amount.value = amt(state.balance); update(); ok.focus(); } });
   }).then(v=>{
     if (v!=='ok' || !(amount > 0)) return;
     const f = sheet.querySelector('form'), date = isISODate(f.date.value) && f.date.value <= today() ? f.date.value : today();
@@ -1808,7 +2157,7 @@ function commitSoon(){ save(); if (!redrawWaiting){ redrawWaiting = true; setTim
 // Edits that don't change any totals or other cells: save only, no redraw at all.
 // A line's amounts from just before its frequency last changed (kept out of the saved data).
 const freqWas = new WeakMap();
-const QUIET = new Set(['bname','pnote','lname','notes','lognote']);
+const QUIET = new Set(['bname','pnote','lname','notes','lognote','oname']);
 // Budget controls sit in a row tagged data-group="b:<tier>" data-i="<index>";
 // "+ Add line" names its section with data-addto instead (so it isn't a drag target).
 function budgetCtx(el){
@@ -1823,7 +2172,8 @@ document.addEventListener('click', e=>{
   if (row && !e.target.closest('button')){ ui.level = row.dataset.levelrow; saveUI(); render(); return; }
   const el = e.target.closest('button'); if (!el) return;
   const d = el.dataset;
-  if (d.tab){ ui.tab=d.tab; saveUI(); render(); return; }
+  // Every tab opens at its top (tapping the tab you're on scrolls back up too), so Overview leads with the answer.
+  if (d.tab){ ui.tab=d.tab; saveUI(); render(); window.scrollTo(0, 0); return; }
   if (d.level){ ui.level=d.level; saveUI(); render(); return; }
   if (d.year){ ui.year=d.year; saveUI(); render(); return; }
   const i = Number(d.i);
@@ -1844,10 +2194,10 @@ document.addEventListener('click', e=>{
     case 'currency': state.currency = d.code; curOpen = false; commit(); break;
     case 'theme': ui.theme = effectiveTheme()==='dark' ? 'light' : 'dark';
       document.documentElement.dataset.theme = ui.theme; saveUI(); renderThemeButton(); break;
-    case 'badd': { const {t,list}=budgetCtx(el); list.push({name:'New item',cur:0,adj:null,every:1}); commit();
+    case 'badd': { const {t,list}=budgetCtx(el); list.push({name:'New item',cur:0,adj:null,every:1}); state.budgetDraft = false; commit();
       const last=document.querySelector(`[data-k="${t}.${list.length-1}.name"]`); if(last){last.focus();last.select();} break; }
-    case 'bdel': { const {i,list}=budgetCtx(el), it=list[i];
-      undoable(`Deleted "${it.name}"`, ()=>list.splice(i,1)); break; }
+    case 'bdel': { const {t,i,list}=budgetCtx(el), it=list[i];
+      undoable(`Deleted "${it.name}"`, ()=>{ list.splice(i,1); trashPut('bline', `"${it.name || 'Unnamed line'}" from your budget`, it, {t, i}); }); break; }
     case 'padd': { if (!/^\d{4}$/.test(ui.year||'')) ui.year = String(new Date().getFullYear());
       const list=(state.paychecks[ui.year] ||= []), prev=list[list.length-1];
       // First paycheck of a year: today if that's the year shown, otherwise Jan 1 of it.
@@ -1855,14 +2205,24 @@ document.addEventListener('click', e=>{
       if (prev){ const dt=new Date(prev.date+'T12:00:00'); dt.setDate(dt.getDate()+14); date=isoDate(dt); proj=prev.projected; }
       list.push({date,actual:null,projected:proj,note:''}); fileOrMove(); commit(); break; }
     case 'pdel': { const list=state.paychecks[ui.year], p=list[i];
-      undoable(`Deleted the ${niceDate(p.date)} paycheck`, ()=>list.splice(i,1)); break; }
-    case 'pgot': { const p=state.paychecks[ui.year][i];
+      undoable(`Deleted the ${niceDate(p.date)} paycheck`, ()=>{ list.splice(i,1); trashPut('pay', `the ${niceDate(p.date)} paycheck`, p); }); break; }
+    case 'pgot': { const p=state.paychecks[d.y || ui.year][i];
       undoable(`${niceDate(p.date)} marked received`, ()=>{ p.actual = p.projected; }); break; }
     case 'pfill': openFill(); break;
+    case 'payall': ui.payAll = !ui.payAll; saveUI(); render(); break;
+    case 'bfold': ui.fold = {...(ui.fold || {}), [d.id]: !(ui.fold && ui.fold[d.id])}; saveUI(); render(); break;
+    // "It was a different amount": open that paycheck's row and put the cursor in its Actual box.
+    case 'pjump': { ui.year = d.y; ui.payAll = true; saveUI(); render();
+      const box = document.querySelector(`[data-k="p.${i}.actual"]`);
+      if (box){ box.scrollIntoView({block:'center'}); box.focus({preventScroll:true}); } break; }
+    case 'pnoteopen': { const row = el.closest('tr'), open = !row.classList.contains('noteopen');
+      row.classList.toggle('noteopen', open); el.setAttribute('aria-expanded', open);
+      if (open) row.querySelector('[data-act=pnote]').focus(); break; }
     case 'money': openMoney(d.kind); break;
     case 'logdel': { const k = state.log.findIndex(e=>e.id===d.id); if (k < 0) break;
       const e = state.log[k], after = r2(state.balance - e.delta);
-      undoable(`Removed the ${niceDate(e.date)} entry. Balance is now ${money(after)}`, ()=>{ state.log.splice(k,1); syncBalance(); }); break; }
+      undoable(`Removed the ${niceDate(e.date)} entry. Balance is now ${money(after)}`, ()=>{ state.log.splice(k,1); syncBalance();
+        trashPut('log', `the ${niceDate(e.date)} ${(e.note || KIND_NOTE[e.kind]).toLowerCase()} (${e.delta < 0 ? '−' : '+'}${money(Math.abs(e.delta))})`, e); }); break; }
     case 'logall': ui.logAll = !ui.logAll; render(); break;
     case 'planauto': state.plan.monthly = null; commit(); break;
     case 'yadd': { const Y=state.income.years, nums=Y.map(y=>parseInt(y.label,10)).filter(n=>!isNaN(n));
@@ -1874,6 +2234,10 @@ document.addEventListener('click', e=>{
     case 'ydel': { const y=state.income.years[i];
       undoable(`Deleted the ${y.label || 'unnamed'} column`, ()=>{
         state.income.years.splice(i,1); state.income.lines.forEach(l=>delete l.amounts[y.id]); }); break; }
+    case 'oadd': { const s={id:uid(), name:'', amount:0, every:'month', start:today(), end:null}; state.otherIncome.push(s); commit();
+      const el=document.querySelector(`[data-k="o.${s.id}.name"]`); if(el) el.focus(); break; }
+    case 'odel': { const s=state.otherIncome[i];
+      undoable(`Deleted "${s.name || 'income source'}"`, ()=>{ state.otherIncome.splice(i,1); trashPut('oinc', `"${s.name || 'Income source'}" from other income`, s); }); break; }
     case 'ladd': { const l={id:uid(), name:'New line', sign:-1, amounts:{}}; state.income.lines.push(l); commit();
       const el=document.querySelector(`[data-k="lname.${esc(l.id)}"]`); if(el){el.focus();el.select();} break; }
     case 'ldel': { const l=state.income.lines[i];
@@ -1892,14 +2256,16 @@ document.addEventListener('click', e=>{
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); markBackup(); break; }
     case 'backuplater': ui.backupSnooze = addDays(today(), 7); saveUI(); render(); break;
     case 'stillright': state.balanceUpdated = today(); commit(); break;
-    case 'climbtip': toggleTip(el); break;
+    // A mouse already opened the read-out on hover, so its click keeps it open rather than toggling it shut.
+    case 'climbtip': if (e.pointerType==='mouse') showTip(el); else toggleTip(el); break;
     case 'import': document.getElementById('importFile').click(); break;
     case 'reset': confirmSheet('Start over?', 'This clears all your data so you can start fresh. You can undo it right after.', 'Clear all data')
       .then(ok=>{ if (ok) undoable('All data cleared', ()=>{ state = fresh(); }); }); break;
     case 'clearall': confirmSheet('Clear all data?', 'This clears everything and starts over with a blank slate. You can undo it right after.', 'Clear all data')
       .then(ok=>{ if (ok) undoable('All data cleared', ()=>{ state = normalize(clone(BLANK)); }); }); break;
-    case 'undo': { const copy = undoCopy; hideToast(); if (copy){ state = copy; celebrate = null; commit(); } break; }
-    case 'toastx': hideToast(); break;
+    case 'undo': undo(); break;
+    case 'toastx': hideToast(false); break;
+    case 'restore': restoreTrash(d.id); break;
   }
 });
 
@@ -1914,7 +2280,11 @@ document.addEventListener('change', e=>{
       const at = obj.exported ? new Date(obj.exported) : null;
       return {data, when: at && !isNaN(at) ? niceDate(isoDate(at)) : ''};
     }).then(({data, when})=>{
-      undoable(`Backup${when ? ' from '+when : ''} restored`, ()=>{ state = normalize(data); fileOrMove(); loadProblem = false; });
+      return confirmSheet('Replace your data?', `This replaces everything in the app with the backup${when ? ' from '+when : ''}. A safety copy of your current data is kept in this browser.`, 'Restore backup').then(ok=>{
+        if (!ok) return;
+        try { localStorage.setItem(KEY+'.beforeImport', JSON.stringify(state)); } catch(_){}
+        undoable(`Backup${when ? ' from '+when : ''} restored`, ()=>{ state = normalize(data); fileOrMove(); loadProblem = false; });
+      });
     }).catch(()=>toast("That file doesn't look like an Emergency Fund backup.")).finally(()=>{el.value='';});
     return;
   }
@@ -1935,9 +2305,10 @@ document.addEventListener('change', e=>{
     case 'lognote': { const e = state.log.find(x=>x.id===d.id); if (e) e.note = v; break; }
     case 'target': { const n = String(v).trim()==='' ? null : parseAmount(v); state.target.value = n > 0 ? n : null; break; }
     case 'bname': { const c=budgetCtx(el); c.list[c.i].name=v; break; }
-    case 'bcur': { const c=budgetCtx(el); c.list[c.i].cur=r2(v); break; }
+    case 'bcur': { const c=budgetCtx(el); c.list[c.i].cur=parseAmount(v); state.budgetDraft = false; break; }
+    case 'payevery': if (PAY_PER_MONTH.hasOwnProperty(v)) state.payEvery = v; break;
     // Adjusted: blank (or the same as Current) means "same as Current".
-    case 'badj': { const c=budgetCtx(el), it=c.list[c.i], n = String(v).trim()==='' ? null : r2(v);
+    case 'badj': { const c=budgetCtx(el), it=c.list[c.i], n = String(v).trim()==='' ? null : parseAmount(v);
       it.adj = n===it.cur ? null : n; break; }
     // How often it's paid: convert the amounts so the monthly cost stays the same ($100/mo → $1,200/yr).
     // Flipping straight back restores the exact amounts that were there before (no rounding drift).
@@ -1952,14 +2323,19 @@ document.addEventListener('change', e=>{
       // Re-sorting changes row positions: redraw now, and drop focus so it
       // doesn't land on whichever paycheck now sits in this row.
       skipRefocus = true; el.blur(); commit(); return;
-    case 'pactual': P().actual = v==='' ? null : r2(v); break;
-    case 'pproj': P().projected=r2(v); break;
+    case 'pactual': P().actual = v==='' ? null : parseAmount(v); break;
+    case 'pproj': P().projected=parseAmount(v); break;
     case 'pnote': P().note=v; break;
-    case 'inet': state.income.years[i].netOverride = v==='' ? null : r2(v); break;
+    case 'inet': state.income.years[i].netOverride = v==='' ? null : parseAmount(v); break;
     case 'ylabel': state.income.years[i].label = v.trim(); break;
     case 'lname': state.income.lines[i].name = v; break;
-    case 'lamt': state.income.lines[i].amounts[d.y] = r2(v); break;
-    case 'typ': state.typicalPaycheck=r2(v); break;
+    case 'lamt': state.income.lines[i].amounts[d.y] = parseAmount(v); break;
+    case 'typ': state.typicalPaycheck=parseAmount(v); break;
+    case 'oname': state.otherIncome[i].name = v; break;
+    case 'oamt': state.otherIncome[i].amount = parseAmount(v); break;
+    case 'oevery': state.otherIncome[i].every = v; break;
+    case 'ostart': { if (!isISODate(v)) return; const s=state.otherIncome[i]; s.start=v; if (s.end && s.end < v) s.end = null; break; }
+    case 'oend': { if (v!=='' && !isISODate(v)) return; const s=state.otherIncome[i]; s.end = v==='' || v < s.start ? null : v; break; }
     case 'notes': state.notes=v; break;
     default: return;
   }
@@ -2041,6 +2417,11 @@ document.addEventListener('dragend', ()=>{
   pointerReleased(); // a drag can end without a pointerup; make sure typing redraws again
 });
 
+// Amount boxes ($ and grouping at rest, plain digits while editing). Clearing a box stays cleared.
+document.addEventListener('focusin', e=>{ const el = e.target;
+  if (el.dataset && 'money' in el.dataset && el.value.trim()!==''){ el.value = amt(parseAmount(el.value)); el.select(); } });
+document.addEventListener('focusout', e=>{ const el = e.target;
+  if (el.dataset && 'money' in el.dataset && el.value.trim()!=='') el.value = mval(parseAmount(el.value)); });
 // Balance box: plain number while editing, separators ("100,000.00") otherwise.
 document.addEventListener('focusin', e=>{ if (e.target.dataset.act==='balance'){ e.target.value = amt(state.balance); e.target.select(); } });
 document.addEventListener('focusout', e=>{ if (e.target.dataset.act==='balance') e.target.value = grouped(parseAmount(e.target.value)); });
@@ -2053,11 +2434,24 @@ function refreshPlan(rate){
   const bal = Number(state.balance)||0, cur = levelTotal('current', ui.level);
   document.getElementById('trend').innerHTML = trendChart(bal, cur, rate);
   document.getElementById('planOut').innerHTML = planText(bal, cur, rate);
-  document.getElementById('planBox').value = grouped(rate);
+  document.getElementById('planBox').value = mval(rate);
+  const range = document.querySelector('.plan-range'); if (range) range.setAttribute('aria-valuetext', `${money(rate)} a month`);
 }
-document.addEventListener('input', e=>{ if (e.target.dataset.act==='plan') refreshPlan(Number(e.target.value)); });
+// Budget amounts update the pinned months-covered summary as you type (saved when you leave the box).
+document.addEventListener('input', e=>{ const el = e.target, a = el.dataset && el.dataset.act;
+  if (a!=='bcur' && a!=='badj') return;
+  const c = budgetCtx(el), it = c.list[c.i], n = String(el.value).trim()==='' ? null : parseAmount(el.value);
+  if (a==='bcur') it.cur = n===null ? 0 : n; else it.adj = n===null || n===it.cur ? null : n;
+  refreshBudgetSummary(); });
+let planFrame = 0;
+document.addEventListener('input', e=>{
+  if (e.target.dataset.act!=='plan') return;
+  const rate = Number(e.target.value);
+  cancelAnimationFrame(planFrame);
+  planFrame = requestAnimationFrame(()=>refreshPlan(rate));   // at most one redraw per screen frame
+});
 document.addEventListener('focusin', e=>{ if (e.target.dataset.act==='planbox'){ e.target.value = amt(parseAmount(e.target.value)); e.target.select(); } });
-document.addEventListener('focusout', e=>{ if (e.target.dataset.act==='planbox' && e.target.value.trim()!=='') e.target.value = grouped(parseAmount(e.target.value)); });
+document.addEventListener('focusout', e=>{ if (e.target.dataset.act==='planbox' && e.target.value.trim()!=='') e.target.value = mval(parseAmount(e.target.value)); });
 // Progress chart readout: a hairline and value at the point nearest the pointer, or stepped with
 // the arrow keys when the chart has keyboard focus.
 function showScrub(chart, k, announce=false){
@@ -2107,9 +2501,11 @@ document.addEventListener('visibilitychange', ()=>{
 darkQuery.addEventListener('change', renderThemeButton);
 
 // Saved screen settings could be stale or edited; fall back to defaults.
-if (!TABS.some(t=>t[0]===ui.tab)) ui.tab = 'overview';
+// Always open on Overview (the coverage answer comes first); the tab you switch to is remembered only until you close the app.
+ui.tab = 'overview';
 if (!LEVELS.some(l=>l[0]===ui.level)) ui.level = 'extras';
 if (ui.theme!=='light' && ui.theme!=='dark') delete ui.theme;
+if (!ui.fold || typeof ui.fold!=='object') ui.fold = {};
 ['lastBackup','backupSnooze','firstSeen'].forEach(k=>{ if (!isISODate(ui[k])) delete ui[k]; });
 if (!ui.firstSeen){ ui.firstSeen = today(); saveUI(); }
 // Ask the browser to keep this app's saved data even when the device is low on space.
