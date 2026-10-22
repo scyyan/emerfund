@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qz0ivoAs0R2kmVw8LFv2Rw+i6f6Q6N4ElC2J8WWvYyI=' 'sha256-gZR2I0WHI9vq41caCn/srIlc/uqPGbeiecvY0w7MU4I='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qz0ivoAs0R2kmVw8LFv2Rw+i6f6Q6N4ElC2J8WWvYyI=' 'sha256-TOpiqEhAPjHpskLsOxoFJgJWLLkk0O64bTdzI60loGs='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#17402F" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F2A1E" media="(prefers-color-scheme: dark)">
@@ -2257,7 +2257,7 @@ document.addEventListener('click', e=>{
       // Phones and tablets: open the share sheet (Save to Files, AirDrop, Mail…), since downloads are unreliable there.
       const file = matchMedia('(pointer:coarse)').matches && typeof File==='function' ? new File([blob], name, {type:'application/json'}) : null;
       if (file && navigator.canShare && navigator.canShare({files:[file]})){
-        navigator.share({files:[file], title:'Emergency Fund backup'}).then(markBackup, ()=>{}); break;
+        navigator.share({files:[file]}).then(markBackup, ()=>{}); break;
       }
       const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); markBackup(); break; }
