@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qz0ivoAs0R2kmVw8LFv2Rw+i6f6Q6N4ElC2J8WWvYyI=' 'sha256-TOpiqEhAPjHpskLsOxoFJgJWLLkk0O64bTdzI60loGs='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qz0ivoAs0R2kmVw8LFv2Rw+i6f6Q6N4ElC2J8WWvYyI=' 'sha256-4HFKzWswb6cBu4ITJyExeYMzOxpQHTpg49Ic3WNf6zc='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#17402F" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F2A1E" media="(prefers-color-scheme: dark)">
@@ -1772,7 +1772,7 @@ function viewSettings(){
     <p class="muted small">${ui.lastBackup ? `Last backup on this device: ${niceDate(ui.lastBackup)}.` : 'No backup made on this device yet.'}</p>
     <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
     <h3>Start over</h3>
-    <p class="muted small">This clears everything and starts over with a blank slate.</p>
+    <p class="muted small">This clears everything and takes you back to the first-time setup.</p>
     <div class="row dangerrow">
     <button class="btn danger" data-act="reset">Clear all data</button>
     </div>
@@ -1824,6 +1824,13 @@ function undoable(msg, change){
   const copy = clone(state), keep = undoStack, back = focusKey(document.activeElement);
   change(); commit(); undoStack = keep; toast(msg, copy, back);
   if (keyboardUsed){ const u = toastEl.querySelector('.undo'); if (u) u.focus({preventScroll:true}); }
+}
+// Clear everything and walk through first-run setup again. The Undo bar waits until setup is
+// finished or skipped (it would sit hidden behind the dialog), and takes back the whole start-over.
+function startOver(msg, change){
+  const copy = clone(state), keep = undoStack;
+  change(); celebrate = null; ui.tab = 'overview'; saveUI(); commit(); window.scrollTo(0, 0);
+  openSetup().then(()=>{ undoStack = keep; toast(msg, copy); });
 }
 function undo(){
   const last = undoStack.pop(); if (!last) return;
@@ -1964,7 +1971,7 @@ function setupCurrency(){
   return `<div class="chips" role="radiogroup" aria-label="Currency">${CURRENCIES.map(([code,sym,name])=>
     `<button type="button" role="radio" class="chip${code===currencyCode()?' on':''}" aria-checked="${code===currencyCode()}" data-setcur="${code}"><b>${sym} ${code}</b><span>${name}</span></button>`).join('')}</div>
     <p class="muted small">This only changes the symbol shown. It never converts amounts.</p>`; } // web build: the currency choice on the first step
-function openSetup(){
+function openSetup(){ // resolves once setup is finished or skipped
   // A currency step comes first only where there is a currency to pick (the web app); then balance, costs, finish line.
   const pickCur = !!setupCurrency(), steps = [...(pickCur ? ['currency'] : []), 'balance', 'costs', 'goal'];
   let step = 0;
@@ -1996,7 +2003,7 @@ function openSetup(){
       ${vals.target==='custom' ? `<label class="field"><span class="lbl">Your goal</span>${bigInput('custom', vals.custom)}</label>` : ''}`; },
   };
   const nav = () => `<div class="actions"><button type="button" class="link" data-skip>Skip setup</button>${step ? '<button type="button" class="btn" data-back>Back</button>' : ''}<button type="button" class="btn primary" data-next>${step < last ? 'Next' : 'See my climb'}</button></div>`;
-  openSheet('', sh=>{
+  return openSheet('', sh=>{
     const f = sh.querySelector('form');
     const read = ()=>{ if (f.bal) vals.bal = f.bal.value; ess.forEach((_,i)=>{ if (f['c'+i]) vals.costs[i] = f['c'+i].value; }); if (f.custom) vals.custom = f.custom.value; };
     const show = ()=>{ f.innerHTML = views[steps[step]]() + nav(); const box = f.querySelector('input[name=bal],input[name=custom],input[name=c'+core[0]+']'); if (box) box.focus(); };
@@ -2022,7 +2029,7 @@ function openSetup(){
       else if ('next' in b.dataset){ if (step < last){ step++; show(); } else finish(); }
     });
     show();
-  }).then(()=>{ ui.setupDone = true; saveUI(); commit(); }); // finished or skipped, it doesn't come back
+  }).then(()=>{ ui.setupDone = true; saveUI(); commit(); }); // finished or skipped, it doesn't come back on its own
 }
 
 /* ---------- Add money / Took money out ---------- */
@@ -2266,10 +2273,10 @@ document.addEventListener('click', e=>{
     // A mouse already opened the read-out on hover, so its click keeps it open rather than toggling it shut.
     case 'climbtip': if (e.pointerType==='mouse') showTip(el); else toggleTip(el); break;
     case 'import': document.getElementById('importFile').click(); break;
-    case 'reset': confirmSheet('Start over?', 'This clears all your data so you can start fresh. You can undo it right after.', 'Clear all data')
-      .then(ok=>{ if (ok) undoable('All data cleared', ()=>{ state = fresh(); }); }); break;
-    case 'clearall': confirmSheet('Clear all data?', 'This clears everything and starts over with a blank slate. You can undo it right after.', 'Clear all data')
-      .then(ok=>{ if (ok) undoable('All data cleared', ()=>{ const keep = state.currency; state = normalize(clone(BLANK)); if (keep) state.currency = keep; }); }); break;
+    case 'reset': confirmSheet('Start over?', 'This clears all your data and takes you back to the first-time setup. You can undo it right after.', 'Clear all data')
+      .then(ok=>{ if (ok) startOver('All data cleared', ()=>{ state = fresh(); }); }); break;
+    case 'clearall': confirmSheet('Clear all data?', 'This clears everything and takes you back to the first-time setup. You can undo it right after.', 'Clear all data')
+      .then(ok=>{ if (ok) startOver('All data cleared', ()=>{ const keep = state.currency; state = normalize(clone(BLANK)); if (keep) state.currency = keep; }); }); break;
     case 'undo': undo(); break;
     case 'toastx': hideToast(false); break;
     case 'restore': restoreTrash(d.id); break;
