@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qz0ivoAs0R2kmVw8LFv2Rw+i6f6Q6N4ElC2J8WWvYyI=' 'sha256-4HFKzWswb6cBu4ITJyExeYMzOxpQHTpg49Ic3WNf6zc='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qz0ivoAs0R2kmVw8LFv2Rw+i6f6Q6N4ElC2J8WWvYyI=' 'sha256-W4OL7RsMrtahDCFOQmdLnvEZcFxaoWok78p2TnLctGA='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#17402F" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F2A1E" media="(prefers-color-scheme: dark)">
@@ -1181,6 +1181,9 @@ function render(){
   const views = {overview:viewOverview,budget:viewBudget,paychecks:viewPaychecks,income:viewIncome,settings:viewSettings};
   document.body.dataset.tab = ui.tab;
   document.getElementById('app').innerHTML = views[ui.tab]();
+  // iPhone's date picker "Reset" goes back to the box's starting value, not to empty. Make that
+  // starting value empty for the optional end dates, so Reset clears them ("ongoing").
+  document.querySelectorAll('[data-act="oend"]').forEach(el=>{ const v = el.value; el.defaultValue = ''; el.value = v; });
   document.querySelectorAll('.xwrap').forEach(w=>{
     if (scrolled[w.dataset.x]) w.querySelector('.xscroll').scrollLeft = scrolled[w.dataset.x];
     setupHScroll(w);
