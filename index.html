@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qz0ivoAs0R2kmVw8LFv2Rw+i6f6Q6N4ElC2J8WWvYyI=' 'sha256-W4OL7RsMrtahDCFOQmdLnvEZcFxaoWok78p2TnLctGA='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qz0ivoAs0R2kmVw8LFv2Rw+i6f6Q6N4ElC2J8WWvYyI=' 'sha256-kbHZh8SixSPAEiZRvbx4NNsYpcst5iyJgpwgXOIjjew='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#17402F" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F2A1E" media="(prefers-color-scheme: dark)">
@@ -1687,7 +1687,7 @@ function viewPaychecks(){
   <div class="card">
     ${hscroll('pay', `<table class="pt"><thead><tr><th>Pay date</th><th>Status</th><th class="num inp">Actual</th><th class="num inp">Projected</th><th class="num">Diff</th><th>Note</th><th></th></tr></thead>
     <tbody>${foldRow}${rows}</tbody></table>`)}
-    ${addBtns}
+    ${addBtns.replace('</div>', `<span class="spacer"></span><button class="btn danger" data-act="ydelpay" aria-label="Delete the ${esc(y)} year and all its paychecks">${ic('x')}Delete ${esc(y)}</button></div>`)}
     <p class="muted small">Paychecks dated after today are projected. Once the date passes, <span class="mouse-only">click</span><span class="touch-only">tap</span> <b>Got it</b> if it matched, or type the actual amount.</p>
   </div>${viewOtherIncome()}`;
 }
@@ -2226,6 +2226,10 @@ document.addEventListener('click', e=>{
     case 'pgot': { const p=state.paychecks[d.y || ui.year][i];
       undoable(`${niceDate(p.date)} marked received`, ()=>{ p.actual = p.projected; }); break; }
     case 'pfill': openFill(); break;
+    // A whole year at once: too big for the deleted-items list, so it asks first and relies on Undo.
+    case 'ydelpay': { const y = ui.year, n = (state.paychecks[y]||[]).length;
+      confirmSheet(`Delete ${y}?`, `This removes the ${y} year and all ${n} of its paycheck${n===1?'':'s'}. You can undo it right after.`, `Delete ${y}`)
+        .then(ok=>{ if (ok) undoable(`Deleted the ${y} paychecks`, ()=>{ delete state.paychecks[y]; }); }); break; }
     case 'payall': ui.payAll = !ui.payAll; saveUI(); render(); break;
     case 'bfold': ui.fold = {...(ui.fold || {}), [d.id]: !(ui.fold && ui.fold[d.id])}; saveUI(); render(); break;
     // "It was a different amount": open that paycheck's row and put the cursor in its Actual box.
